@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./peices/nav/navbar";
+import { auth } from "@/lib/auth/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,16 +19,19 @@ export const metadata: Metadata = {
   description: "idk, cool archive or smthing",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+}: LayoutProps<"/">) {
+  const session = await auth.getSession();
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />  
+        <Navbar user={session.data?.user ?? null} />
         {children}
-        
       </body>
     </html>
   );

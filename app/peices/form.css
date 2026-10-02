@@ -1,4 +1,6 @@
 form {
+    margin: auto;
+
     gap: 5px;
 
     display: flex;
@@ -8,6 +10,4 @@ form {
 
     justify-content: center;
     align-items: center;
-
-    background: var(--background-3);
 }
