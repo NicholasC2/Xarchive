@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth/server";
-import LogoutButton from "./LogoutButton";
+import "../peices/options-list.css"
 
 export default async function AccountPage() {
     const session = await auth.getSession();
@@ -7,18 +7,22 @@ export default async function AccountPage() {
 
     return (
         <>
-            <div className="flex flex-column flex-1">
+            <div className="options-list">
                 {user ? (
                     <>
-                        <p>{user.name}</p>
-                        <p>{user.email}</p>
+                        <div>
+                            <b>Username:</b>
+                            <p>{user.name}</p>
+                        </div>
+                        <div>
+                            <b>Email:</b>
+                            <p>{user.email}</p>
+                        </div>
                     </>
                 ) : (
                     <p>Not signed in</p>
                 )}
             </div>
-
-            <LogoutButton />
         </>
     );
 }

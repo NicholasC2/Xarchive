@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import "./navbar.css";
+import LogoutButton from "@/app/account/LogoutButton";
 
 export default function Navbar({ user }: { user: any }) {
   const [searchbarShown, setShowSearchbar] = useState(false);
@@ -21,7 +22,10 @@ export default function Navbar({ user }: { user: any }) {
       />
 
       {user ? (
-        <a href="/account" >{user.name || user.email}</a>
+        <>
+          <a href="/account" >{user.name || user.email}</a>
+            <LogoutButton />
+        </>
       ) : (
         <>
           <a href="/sign-up">Sign Up</a>
