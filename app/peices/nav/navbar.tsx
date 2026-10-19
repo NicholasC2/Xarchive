@@ -20,6 +20,8 @@ export default function Navbar({ user }: { user: any }) {
         onClick={() => setShowSearchbar(!searchbarShown)}
         style={{ cursor: "pointer" }}
       />
+      
+      <a href="/add-song">Add Song</a>
 
       {user ? (
         <>
