@@ -19,7 +19,7 @@ export default function AddSong() {
             <input name="name" type="text" />
 
             <label>Song Main Artists:</label>
-            <SearchInput name="mainArtists" searchable={["hoshie star", "hoshie"]} />
+            <SearchInput name="mainArtists" searchable={["hoshie star"]} splitAt=", " /> {/* make sure to change searchable to artists */}
 
             <input type="submit" value="Add Song" style={{ cursor: "pointer" }} />
 
