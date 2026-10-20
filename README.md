@@ -26,3 +26,5 @@ Status: paused mid-implementation on 2026-10-20. Continue from the checklist bel
 - [ ] Run `npx tsc --noEmit` and `npm run lint`; verify FFmpeg WebAssembly loads and can strip/tag a sample file in the browser.
 
 Notes: `next typegen` was run after the route rename; a stale `.next/dev/types/validator.ts` was removed, and `npx tsc --noEmit` passed after the multi-file form change. Re-run checks after wiring the remaining audio helpers. FFmpeg core is currently fetched from the pinned unpkg URL in the browser, so verify network/CORS behavior in the target deployment.
+
+GitHub sync: local `main` is 3 commits ahead and 1 commit behind `origin/main`. A read-only merge preview found conflicts in `app/add-song/page.tsx`, `app/pieces/search.css`, `package.json`, and `package-lock.json`. No merge, rebase, reset, push, or new commit was performed. Resolve the conflicts intentionally before pushing.
