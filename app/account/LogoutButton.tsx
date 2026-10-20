@@ -1,13 +1,17 @@
 "use client";
 
 import { authClient } from "@/lib/auth/client";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {
+    const router = useRouter();
     return (
-        <button style={{cursor: "pointer"}} onClick={()=>{
+        <button className="logout-button" onClick={()=>{
             authClient.signOut().then(()=>{
-                location.pathname = "/"
+                router.replace("/");
+                router.refresh();
             });
-        }}>Logout</button>
+        }} aria-label="Log out" title="Log out"><LogOut size={15} /></button>
     )
 }

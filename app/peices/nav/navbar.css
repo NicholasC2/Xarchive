@@ -1,13 +1,134 @@
 .navbar {
+    position: sticky;
+    z-index: 20;
+    top: 0;
     display: flex;
-    flex-direction: row;
-    width: 100%;
-
-    background-color: var(--background-3);
-    padding: 7px;
-    
+    min-height: 62px;
     align-items: center;
-    gap: 10px;
+    gap: 28px;
+    padding: 0 clamp(18px, 5vw, 72px);
+    border-bottom: 1px solid var(--line);
+    background: var(--background-1);
+    color: var(--foreground-1);
+}
 
-    height: 40px;
+.brand,
+.nav-links,
+.nav-account,
+.nav-links a,
+.nav-account a,
+.nav-search {
+    display: flex;
+    align-items: center;
+}
+
+.brand {
+    flex: 0 0 auto;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.nav-links,
+.nav-account {
+    gap: 22px;
+    font-size: 13px;
+}
+
+.nav-links a {
+    gap: 4px;
+    color: var(--foreground-2);
+    transition: color 120ms ease;
+}
+
+.nav-links a:hover,
+.nav-account a:hover {
+    color: white;
+}
+
+.nav-spacer {
+    flex: 1;
+}
+
+.nav-account {
+    flex: 0 0 auto;
+}
+
+.nav-account .nav-signup {
+    min-height: 34px;
+    padding: 0 13px;
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+}
+
+.nav-search {
+    width: min(250px, 25vw);
+    border-bottom: 1px solid #666660;
+}
+
+.nav-search input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: white;
+    font-size: 13px;
+}
+
+.nav-search input::placeholder {
+    color: #a4a49e;
+}
+
+.nav-search button,
+.icon-button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.nav-search-toggle {
+    color: #ddd;
+}
+
+.nav-account .logout-button {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+@media (max-width: 620px) {
+    .navbar {
+        min-height: 56px;
+        gap: 14px;
+        padding: 0 14px;
+    }
+
+    .nav-profile,
+    .nav-links a:first-child {
+        display: none;
+    }
+
+    .nav-links,
+    .nav-account {
+        gap: 12px;
+        font-size: 12px;
+    }
+
+    .nav-search {
+        width: min(180px, 34vw);
+    }
 }

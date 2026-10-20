@@ -10,12 +10,15 @@ export interface AudioFile {
     sizeBytes: number;
     bitrateKbps?: number;
     bitDepth?: number;
+    bio?: string;
+    source?: "soundcloud" | "spotify" | "youtube" | "social media" | "unknown";
 }
 
 export interface Artist {
     id: string;
     name: string;
     bio: string;
+    aka?: string[];
 
     profilePhoto?: Image | undefined;
 }
@@ -51,9 +54,18 @@ export interface Album {
     genre: Genre[];
 
     mainArtist: Artist[];
+    collective?: Collective;
     
     releaseDate: Date | undefined; // undefined for unreleased
     songs: Song[];
+    releaseYear?: number;
+}
+
+export interface Collective {
+    id: string;
+    name: string;
+    artists: Artist[];
+    bio?: string;
 }
 
 export interface Song {
@@ -65,6 +77,7 @@ export interface Song {
 
     mainArtist: Artist[];
     featuredArtists: Artist[];
+    collective?: Collective;
 
     releaseDate: Date | undefined; // undefined for unreleased
     audioFiles: AudioFile[];

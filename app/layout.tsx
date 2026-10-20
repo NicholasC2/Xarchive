@@ -16,8 +16,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Xarchive",
-  description: "idk, cool archive or smthing",
+  description: "A community-built archive for the music and artists worth keeping.",
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function RootLayout({
   children,

@@ -1,0 +1,119 @@
+.archive-entry-row {
+  display: grid;
+  min-height: 82px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.archive-entry-row:last-child {
+  border-bottom: 0;
+}
+
+.archive-entry-art {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--background-2);
+  color: var(--foreground-3);
+}
+
+.archive-entry-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.archive-entry-content {
+  min-width: 0;
+}
+
+.archive-entry-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.archive-entry-title > span {
+  flex: 0 0 auto;
+  color: var(--accent-dark);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.archive-entry-title h2 {
+  overflow: hidden;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-entry-title h2 a:hover,
+.archive-entry-content .artist-name-link:hover {
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.archive-entry-content p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--foreground-2);
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+}
+
+.archive-entry-content .archive-entry-tracklist,
+.archive-entry-content .archive-entry-bio {
+  color: var(--foreground-3);
+}
+
+.archive-entry-content audio {
+  display: block;
+  width: min(100%, 360px);
+  height: 28px;
+  margin-top: 6px;
+}
+
+.archive-entry-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: 3px;
+  max-width: 130px;
+  overflow: hidden;
+  color: var(--foreground-3);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-entry-meta a:hover {
+  color: var(--accent-dark);
+}
+
+@media (max-width: 560px) {
+  .archive-entry-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .archive-entry-art {
+    width: 42px;
+    height: 42px;
+  }
+
+  .archive-entry-meta {
+    grid-column: 2;
+    align-items: start;
+    max-width: none;
+  }
+}

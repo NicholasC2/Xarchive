@@ -1,15 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background-1: #ffffff;
-  --background-2: #eeeeee;
-  --background-3: #dddddd;
+  color-scheme: dark;
+  --background-1: #171715;
+  --background-2: #222220;
+  --background-3: #2c2c29;
+  --foreground-1: #ededeb;
+  --foreground-2: #c1c1bc;
+  --foreground-3: #92928b;
+  --surface-1: #85857d;
+  --accent: #df3832;
+  --accent-dark: #fa746d;
+  --line: #3a3a36;
+  --success: #77c99b;
+}
 
-  --foreground-1: #171717;
-  --foreground-2: #272727;
-  --foreground-3: #373737;
-  
-  --surface-1: #999999;
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --background-1: #f8f8f6;
+    --background-2: #efefec;
+    --background-3: #e3e3df;
+    --foreground-1: #171715;
+    --foreground-2: #41413d;
+    --foreground-3: #777771;
+    --surface-1: #a5a59d;
+    --accent: #d92828;
+    --accent-dark: #a71e1e;
+    --line: #d5d5d0;
+    --success: #286b4c;
+  }
 }
 
 @theme inline {
@@ -19,34 +39,55 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-1: #0a0a0a;
-    --background-2: #1a1a1a;
-    --background-3: #2a2a2a;
-
-    --foreground-1: #ededed;
-    --foreground-2: #dedede;
-    --foreground-3: #cecece;
-
-    --surface-1: #999999;
-  }
-}
-
-body {
-  background: var(--background-1);
-  color: var(--foreground-1);
-  font-family: Arial, Helvetica, sans-serif;
+* {
+  box-sizing: border-box;
+  border-radius: 0 !important;
 }
 
 html,
 body {
   width: 100%;
   min-height: 100%;
+  margin: 0;
+  background: var(--background-1);
+  color: var(--foreground-1);
+  font-family: var(--font-geist-sans), sans-serif;
 }
 
-input {
-  background: var(--background-2);
-  outline: none;
-  padding: 4px 10px;
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--foreground-1);
 }
