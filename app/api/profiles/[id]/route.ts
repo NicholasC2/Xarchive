@@ -22,11 +22,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (!profile) return NextResponse.json({ error: "Profile not found." }, { status: 404 });
 
     const entries = await sql`SELECT e.id, e.kind, e.title, e.aka, e.artists, e.bio, e.source,
-      e.media_url AS "mediaUrl", e.file_url AS "fileUrl", e.file_name AS "fileName",
-      e.file_type AS "fileType", e.tracklist, e.release_year AS "releaseYear",
+      e.media_url AS "mediaUrl", e.file_name AS "fileName",
+      e.file_type AS "fileType", e.tracklist, e.tags, e.genres, e.album_id AS "albumId", a.title AS album,
+      e.release_year AS "releaseYear",
       e.collective_id AS "collectiveId",
       c.title AS collective, e.created_at AS "createdAt"
       FROM archive_entries e LEFT JOIN archive_entries c ON c.id = e.collective_id
+      LEFT JOIN archive_entries a ON a.id = e.album_id
       WHERE e.created_by = ${id} ORDER BY e.created_at DESC`;
     const followers = await sql`SELECT p.user_id AS id, p.username, p.image_url AS "imageUrl"
       FROM archive_follows f JOIN archive_profiles p ON p.user_id = f.follower_id
@@ -35,8 +37,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       FROM archive_follows f JOIN archive_profiles p ON p.user_id = f.following_id
       WHERE f.follower_id = ${id} ORDER BY f.created_at DESC LIMIT 100`;
     const artists = await sql`SELECT id, title FROM archive_entries WHERE kind = 'artist' ORDER BY title`;
+    const entriesWithAudioUrls = (entries as unknown as { id: string; kind: string }[]).map((entry) => ({
+      ...entry,
+      fileUrl: entry.kind === "song" ? `/api/archive/${encodeURIComponent(entry.id)}/audio` : null,
+    }));
 
-    return NextResponse.json({ profile, entries, followers, following, artists, viewerId: viewer?.id ?? null });
+    return NextResponse.json({ profile, entries: entriesWithAudioUrls, followers, following, artists, viewerId: viewer?.id ?? null });
   } catch {
     return NextResponse.json({ error: "This profile is temporarily unavailable." }, { status: 503 });
   }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "./peices/nav/navbar";
+import Navbar from "./pieces/nav/navbar";
 import { auth } from "@/lib/auth/server";
 
 const geistSans = Geist({
@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Xarchive",
-  description: "A community-built archive for the music and artists worth keeping.",
+  description: "A community-built archive for music.",
 };
 
 export const dynamic = "force-dynamic";

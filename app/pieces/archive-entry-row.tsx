@@ -1,7 +1,6 @@
 import { Disc3, Users, UsersRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import ArtistNames from "./artist-names";
 import "./archive-entry-row.css";
 
 export type ArchiveEntrySummary = {
@@ -21,6 +20,13 @@ export type ArchiveEntrySummary = {
   createdBy?: string;
   creatorName?: string | null;
 };
+
+function ArtistNames({ names, artistIds }: { names: string[]; artistIds: Record<string, string> }) {
+  return <>{names.map((name, index) => {
+    const id = artistIds[name.toLowerCase()];
+    return <span key={`${name}-${index}`}>{id ? <Link className="artist-name-link" href={`/artists/${encodeURIComponent(id)}`}>{name}</Link> : name}{index < names.length - 1 ? ", " : ""}</span>;
+  })}</>;
+}
 
 export default function ArchiveEntryRow({ entry, showContributor = false }: { entry: ArchiveEntrySummary; showContributor?: boolean }) {
   const artists = entry.artists ?? [];

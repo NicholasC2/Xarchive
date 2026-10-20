@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import ArchiveEntryRow from "@/app/peices/archive-entry-row";
+import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
 import "./artist-page.css";
 
 type Artist = { id: string; title: string; aka: string[]; bio: string; imageUrl: string | null };

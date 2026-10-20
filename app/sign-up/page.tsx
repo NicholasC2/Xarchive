@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import "../peices/auth.css";
+import "../pieces/auth.css";
 
 const emailReg = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 

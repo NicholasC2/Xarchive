@@ -9,10 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@neon/config": "^1.7.2",
     "@neon/env": "^1.4.3",
     "@neondatabase/auth": "^0.5.0-beta",
     "@neondatabase/serverless": "^1.2.0",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.47.0",
     "next": "16.3.5",
     "react": "19.2.8",

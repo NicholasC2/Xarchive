@@ -25,7 +25,7 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
       <Link className="brand" href="/">Xarchive</Link>
       <div className="nav-links">
         <Link href="/">Home</Link>
-        <Link href="/add-song">Contribute <ArrowUpRight size={14} /></Link>
+        <Link href="/contribute">Contribute <ArrowUpRight size={14} /></Link>
       </div>
       <div className="nav-spacer" />
       {searchOpen ? (

@@ -37,14 +37,36 @@ async function initializeArchiveTables() {
     file_type TEXT,
     file_size BIGINT,
     collective_id TEXT,
+    album_id TEXT,
+    tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     tracklist TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     release_year INTEGER,
     created_by TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS collective_id TEXT`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS album_id TEXT`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS tracklist TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS release_year INTEGER`;
+  await sql`CREATE TABLE IF NOT EXISTS archive_audio_files (
+    id TEXT PRIMARY KEY,
+    song_id TEXT NOT NULL REFERENCES archive_entries(id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    file_size BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`INSERT INTO archive_audio_files (id, song_id, file_url, file_name, file_type, file_size)
+    SELECT e.id || ':legacy', e.id, e.file_url, COALESCE(e.file_name, 'audio'),
+      COALESCE(e.file_type, 'audio/mpeg'), COALESCE(e.file_size, 0)
+    FROM archive_entries e
+    WHERE e.kind = 'song' AND e.file_url IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM archive_audio_files f WHERE f.song_id = e.id)
+    ON CONFLICT (id) DO NOTHING`;
   await sql`DO $$ BEGIN
     IF NOT EXISTS (
       SELECT 1 FROM pg_constraint
@@ -66,6 +88,7 @@ async function initializeArchiveTables() {
   )`;
   await sql`CREATE INDEX IF NOT EXISTS archive_entries_created_at_idx ON archive_entries (created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS archive_entries_creator_idx ON archive_entries (created_by)`;
+  await sql`CREATE INDEX IF NOT EXISTS archive_audio_files_song_idx ON archive_audio_files (song_id)`;
   await sql`CREATE INDEX IF NOT EXISTS archive_follows_following_idx ON archive_follows (following_id)`;
 }
 

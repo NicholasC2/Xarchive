@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import ArchiveEntryRow from "@/app/peices/archive-entry-row";
+import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
 import "./profile-view.css";
 
 type Person = { id: string; username: string; imageUrl: string | null };
