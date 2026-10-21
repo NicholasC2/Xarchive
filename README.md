@@ -1,11 +1,31 @@
 # Xarchive
-# Xarchive
 
 ## Current status
 
 This project is active and still in a mid-refactor state. The app has already moved a lot of work forward, but there are several remaining gaps between the architecture, UX, auth flow, and the archive's audio/content model.
 
+The idea is to have a project where anyone can suggest changes and add audiofiles but nobody can delete files, and to accept a change on a bio or something the original author of that song or artist should have to accept that change. also anyone will be able to add music to any profile, the only people that will be able to delete songs are admins, also give the account with the email nicholasc2@proton.me super admin where i can make people admin or revoke peoples admin.
+
 The goal is to treat this as the source of truth for required work and to keep each fix tracked in one place until the app is production-ready.
+
+## Specifications
+Every single artist clickable should use the same ArchiveClickable component, this component will be scalable width and height and will look like a row, with the artists pfp on the left, then the artists name on the top and the artists bio on the bottom.
+
+All lists should use ArchiveList, all list components should use ArchiveClickable,
+
+Artist and Song and Albu page should all use the exact same template with a column on the right an some lists on the left
+
+### Home Page
+Should include a popular songs list and popular artists list, this should be the only thing on the home page don't add a logo or tagline or anything.
+
+### Artist Page
+The artists info should be on the right, at the top should be the profile photo and the artists additional photos, then below that it should show the aka with a ReadMore, then below that should be the bio with a ReadMore (5 lines), then in the middle there should be a list of artists songs and a list of the artists albums (both max 5, then a search for all their songs or albums).
+
+### Song/Album page
+on the right shuold be the album info and it should have all the covers at the top then the album info below that
+
+### Bulk Download
+idk do something
 
 ## Completed work already in place
 

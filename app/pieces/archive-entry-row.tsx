@@ -8,6 +8,7 @@ import { createTaggedAudio } from "@/lib/audio-processing";
 import { useRouter } from "next/navigation";
 import { MouseEvent, KeyboardEvent } from "react";
 import "./archive-entry-row.css";
+import ReadMore from "./read-more";
 
 export type AudioFileSummary = {
   id: string;

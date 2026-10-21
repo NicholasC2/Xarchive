@@ -16,7 +16,7 @@ export default function ReadMore({
   if (!text) return null;
   return (
     <div className={`read-more ${expanded ? "read-more-expanded" : ""}`} style={{ "--read-more-lines": lines } as React.CSSProperties}>
-      <p>{text}</p>
+      {text}
       <button type="button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded}>
         {expanded ? "Show less" : label}
       </button>

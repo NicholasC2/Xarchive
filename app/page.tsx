@@ -31,19 +31,6 @@ export default function Home() {
 
   return (
     <main className="archive-page home-page">
-      <header className="home-hero">
-        <div>
-          <p className="eyebrow">A COMMUNITY-BUILT MUSIC ARCHIVE</p>
-          <h1>Listen closer.<br /><span>Keep the record.</span></h1>
-          <p>Discover songs, artists, albums, and the stories behind the recordings.</p>
-          <div className="home-actions">
-            <Link className="home-primary-action" href="/search">Explore the archive <ArrowRight size={16} /></Link>
-            <Link className="home-secondary-action" href="/contribute"><Plus size={15} /> Contribute</Link>
-          </div>
-        </div>
-        <div className="home-hero-mark" aria-hidden="true"><Disc3 size={116} strokeWidth={0.7} /><span>X</span></div>
-      </header>
-
       {loading ? <div className="archive-state">Opening the archive…</div> : error ? (
         <div className="archive-state archive-error">{error}</div>
       ) : (

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import SearchInput from "@/app/pieces/search-input";
 import "./navbar.css";
 import LogoutButton from "@/app/account/LogoutButton";
-import SearchInput from "@/app/pieces/search-input";
 
 type NavbarUser = { id: string; name?: string | null; email?: string | null };
 
