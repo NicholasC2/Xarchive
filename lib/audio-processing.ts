@@ -54,6 +54,29 @@ function toArrayBuffer(bytes: Uint8Array) {
   return new Uint8Array(bytes).buffer;
 }
 
+export function pickBestAudioFile<T extends { fileName: string; fileType?: string | null; fileSize?: number | string; url: string }>(files: T[]) {
+  if (!files.length) return null;
+  const extensionPriority: Record<string, number> = {
+    flac: 100,
+    wav: 90,
+    aiff: 88,
+    aac: 78,
+    m4a: 76,
+    mp4: 76,
+    ogg: 70,
+    webm: 68,
+    mp3: 50,
+  };
+
+  return [...files].sort((left, right) => {
+    const leftExtension = (left.fileName.split(".").pop() || left.fileType?.split("/").pop() || "").toLowerCase();
+    const rightExtension = (right.fileName.split(".").pop() || right.fileType?.split("/").pop() || "").toLowerCase();
+    const leftScore = (extensionPriority[leftExtension] ?? 0) + Math.max(0, Number(left.fileSize || 0) / (1024 * 1024));
+    const rightScore = (extensionPriority[rightExtension] ?? 0) + Math.max(0, Number(right.fileSize || 0) / (1024 * 1024));
+    return rightScore - leftScore;
+  })[0];
+}
+
 export async function stripAudioMetadata(file: File) {
   const extension = audioExtension(file.name, file.type);
   if (!extension) throw new Error("Use an MP3, WAV, M4A, AAC, OGG, FLAC, or WebM audio file.");
@@ -132,4 +155,14 @@ export async function createTaggedAudio(track: DownloadTrack) {
     await ffmpeg.deleteFile(coverPath).catch(() => {});
     await ffmpeg.deleteFile(outputPath).catch(() => {});
   }
+}
+
+export async function triggerTaggedAudioDownload(track: DownloadTrack) {
+  const { blob, fileName } = await createTaggedAudio(track);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

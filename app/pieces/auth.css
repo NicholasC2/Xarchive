@@ -1,6 +1,6 @@
 .auth-page {
   display: flex;
-  width: min(100% - 32px, 420px);
+  width: min(100% - 32px, 520px);
   min-height: calc(100vh - 62px);
   align-items: start;
   justify-content: center;
@@ -10,6 +10,7 @@
 
 .auth-form {
   display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
@@ -74,7 +75,7 @@
 
 @media (max-width: 660px) {
   .auth-page {
-    width: min(100% - 28px, 420px);
+    width: min(100% - 28px, 520px);
     padding-top: 38px;
   }
 }

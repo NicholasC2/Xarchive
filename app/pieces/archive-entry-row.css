@@ -55,6 +55,13 @@
   white-space: nowrap;
 }
 
+.entry-title-link {
+  display: block;
+  width: 100%;
+  padding: 4px 0;
+  margin: -4px 0;
+}
+
 .archive-entry-title h2 a:hover,
 .archive-entry-content .artist-name-link:hover {
   color: var(--accent-dark);
@@ -81,6 +88,127 @@
   width: min(100%, 360px);
   height: 28px;
   margin-top: 6px;
+}
+
+.archive-entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.archive-entry-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  background: var(--background-2);
+  color: var(--foreground-1);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.archive-entry-link:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.archive-link-icon {
+  display: inline-grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(136, 100, 45, 0.08);
+  font-size: 9px;
+}
+
+.archive-entry-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.archive-entry-toolbar a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  color: var(--foreground-1);
+  font-size: 9px;
+}
+
+.audio-file-list {
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  background: var(--background-2);
+}
+
+.audio-file-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: var(--foreground-2);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audio-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+
+.audio-file-item:first-of-type {
+  border-top: 0;
+}
+
+.audio-file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.audio-file-meta span,
+.audio-file-meta small {
+  color: var(--foreground-3);
+  font-size: 9px;
+}
+
+.audio-file-meta strong {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-file-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  color: var(--foreground-1);
+  font-size: 9px;
+}
+
+.audio-file-actions a:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
 }
 
 .archive-entry-meta {

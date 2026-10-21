@@ -21,8 +21,14 @@ async function initializeArchiveTables() {
     username TEXT NOT NULL,
     bio TEXT NOT NULL DEFAULT '',
     image_url TEXT,
+    banner_url TEXT,
+    gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb,
+    social_links JSONB NOT NULL DEFAULT '[]'::jsonb,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+  await sql`ALTER TABLE archive_profiles ADD COLUMN IF NOT EXISTS banner_url TEXT`;
+  await sql`ALTER TABLE archive_profiles ADD COLUMN IF NOT EXISTS gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`ALTER TABLE archive_profiles ADD COLUMN IF NOT EXISTS social_links JSONB NOT NULL DEFAULT '[]'::jsonb`;
   await sql`CREATE TABLE IF NOT EXISTS archive_entries (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('song', 'artist', 'album', 'collective')),
@@ -36,21 +42,28 @@ async function initializeArchiveTables() {
     file_name TEXT,
     file_type TEXT,
     file_size BIGINT,
+    banner_url TEXT,
+    gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb,
     collective_id TEXT,
     album_id TEXT,
     tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     tracklist TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    links JSONB NOT NULL DEFAULT '[]'::jsonb,
     release_year INTEGER,
     created_by TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS banner_url TEXT`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS gallery_images JSONB NOT NULL DEFAULT '[]'::jsonb`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS collective_id TEXT`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS album_id TEXT`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS tracklist TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS links JSONB NOT NULL DEFAULT '[]'::jsonb`;
   await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS release_year INTEGER`;
+  await sql`ALTER TABLE archive_entries ADD COLUMN IF NOT EXISTS page_views INTEGER NOT NULL DEFAULT 0`;
   await sql`CREATE TABLE IF NOT EXISTS archive_audio_files (
     id TEXT PRIMARY KEY,
     song_id TEXT NOT NULL REFERENCES archive_entries(id) ON DELETE CASCADE,
@@ -126,6 +139,39 @@ export function isAudioDataUrl(value: unknown, maxBytes = 8 * 1024 * 1024): valu
   const match = /^data:audio\/(?:mpeg|wav|x-wav|mp4|aac|ogg|flac|webm);base64,([A-Za-z0-9+/=]+)$/.exec(value);
   return Boolean(match && Math.floor((match[1].length * 3) / 4) <= maxBytes);
 }
+
+export type ArchiveLink = {
+  label: string;
+  url: string;
+  icon?: string | null;
+};
+
+export function normalizeArchiveLinks(value: unknown): ArchiveLink[] {
+  if (!Array.isArray(value)) return [];
+  const entries: ArchiveLink[] = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const maybeLink = item as Record<string, unknown>;
+    const label = typeof maybeLink.label === "string" ? maybeLink.label.trim() : "";
+    const rawUrl = typeof maybeLink.url === "string" ? maybeLink.url.trim() : "";
+    const icon = typeof maybeLink.icon === "string" ? maybeLink.icon.trim() : "";
+    if (!label || !rawUrl) continue;
+
+    const normalizedUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+    try {
+      new URL(normalizedUrl);
+      entries.push({ label, url: normalizedUrl, icon: icon || null });
+    } catch {
+      // Ignore invalid URLs so bad data does not poison the profile or entry metadata.
+    }
+  }
+
+  return entries.slice(0, 12);
+}
+
+export { withAudioFileSummaries } from "./audio-file-summary";
+export type { AudioFileRow, AudioFileSummary } from "./audio-file-summary";
 
 export const audioSources = [
   "soundcloud",

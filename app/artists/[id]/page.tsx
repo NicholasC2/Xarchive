@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Download, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
+import ReadMore from "@/app/pieces/read-more";
 import "./artist-page.css";
 
 type Artist = { id: string; title: string; aka: string[]; bio: string; imageUrl: string | null };
@@ -18,6 +19,7 @@ export default function ArtistPage() {
   const [artistIds, setArtistIds] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -41,7 +43,12 @@ export default function ArtistPage() {
 
   return (
     <main className="artist-page">
-      <Link className="artist-back-link" href="/"><ArrowLeft size={15} /> Archive</Link>
+      <div className="artist-page-actions">
+        <Link className="artist-back-link" href="/"><ArrowLeft size={15} /> Archive</Link>
+        <button type="button" className="bulk-download-button" onClick={() => router.push(`/bulk?type=artist&id=${encodeURIComponent(params.id)}`)} disabled={!entries.some((entry) => entry.kind === "song")}>
+          <Download size={15} /> Download artist
+        </button>
+      </div>
       <div className="artist-layout">
         <section className="artist-main" aria-label="Artist archive entries">
           <header className="artist-section-heading"><h1>Archive entries</h1><span>{entries.length}</span></header>
@@ -49,8 +56,8 @@ export default function ArtistPage() {
         </section>
         <aside className="artist-sidebar">
           <div className="artist-photo">{artist.imageUrl ? <Image src={artist.imageUrl} alt="" width={104} height={104} unoptimized /> : <Users size={28} />}</div>
-          <div className="artist-record-info"><span>ARTIST</span><h2>{artist.title}</h2>{artist.aka.length > 0 && <p><strong>AKA</strong> {artist.aka.join(", ")}</p>}</div>
-          {artist.bio && <p className="artist-bio">{artist.bio}</p>}
+          <div className="artist-record-info"><span>ARTIST</span><h2>{artist.title}</h2>{artist.aka.length > 0 && <p><strong>AKA</strong> <ReadMore maxLines={2} className="meta-read-more">{artist.aka.join(", ")}</ReadMore></p>}</div>
+          {artist.bio && <ReadMore maxLines={4} className="artist-bio-read-more"><p className="artist-bio">{artist.bio}</p></ReadMore>}
         </aside>
       </div>
     </main>

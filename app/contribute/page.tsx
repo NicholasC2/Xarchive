@@ -1,16 +1,17 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight, ImagePlus, Music2, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Genre } from "@/lib/types";
 import { stripAudioMetadata } from "@/lib/audio-processing";
+import SongTab from "./song-tab";
+import AlbumTab from "./album-tab";
+import ArtistTab from "./artist-tab";
+import CollectiveTab from "./collective-tab";
+import type { ArchiveEntry, ContributionMode } from "./types";
 import "./contribution-form.css";
-
-type Mode = "song" | "album" | "artist" | "collective";
-type ArchiveEntry = { id: string; kind: string; title: string; aka: string[]; mediaUrl?: string | null; releaseYear?: number | null };
 
 function fileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -21,15 +22,45 @@ function fileAsDataUrl(file: File) {
   });
 }
 
+function parseReleaseYearFromInput(value: FormDataEntryValue | null | undefined) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const yearFromIso = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+    ? Number(trimmed.slice(0, 4))
+    : null;
+
+  if (yearFromIso !== null && yearFromIso >= 1000 && yearFromIso <= 3000) {
+    return yearFromIso;
+  }
+
+  const asNumber = Number(trimmed);
+  if (Number.isInteger(asNumber) && asNumber >= 1000 && asNumber <= 3000) {
+    return asNumber;
+  }
+
+  return null;
+}
+
 export default function ContributionForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("song");
+  const [mode, setMode] = useState<ContributionMode>("song");
   const [entries, setEntries] = useState<ArchiveEntry[]>([]);
   const [albums, setAlbums] = useState<ArchiveEntry[]>([]);
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
   const [selectedAlbumId, setSelectedAlbumId] = useState("");
+  const [selectedAlbumTitle, setSelectedAlbumTitle] = useState("");
+  const [selectedSongCollectiveId, setSelectedSongCollectiveId] = useState("");
+  const [selectedSongCollectiveTitle, setSelectedSongCollectiveTitle] = useState("");
+  const [selectedAlbumCollectiveId, setSelectedAlbumCollectiveId] = useState("");
+  const [selectedAlbumCollectiveTitle, setSelectedAlbumCollectiveTitle] = useState("");
   const [artistImage, setArtistImage] = useState<File | null>(null);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState("");
+  const [albumTracks, setAlbumTracks] = useState<string[]>([""]);
+  const [albumArtistInput, setAlbumArtistInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -46,12 +77,20 @@ export default function ContributionForm() {
     setImagePreview(file ? URL.createObjectURL(file) : "");
   }
 
-  function changeMode(nextMode: Mode) {
+  function changeMode(nextMode: ContributionMode) {
     setMode(nextMode);
     setAudioFiles([]);
     setArtistImage(null);
+    setBannerImage(null);
+    setGalleryImages([]);
     setImagePreview("");
     setSelectedAlbumId("");
+    setSelectedAlbumTitle("");
+    setSelectedSongCollectiveId("");
+    setSelectedSongCollectiveTitle("");
+    setSelectedAlbumCollectiveId("");
+    setSelectedAlbumCollectiveTitle("");
+    if (nextMode !== "album") setAlbumTracks([""]);
     setMessage("");
   }
 
@@ -85,31 +124,51 @@ export default function ContributionForm() {
         }
         if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Song artwork must be 2 MB or smaller.");
         const coverUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
-        const parsedYear = Number(form.get("songReleaseYear"));
+        const parsedYear = parseReleaseYearFromInput(form.get("songReleaseDate") ?? form.get("songReleaseYear"));
         payload = { kind: "song", title, artists: artistNames, collectiveId, bio,
           source: String(form.get("source") ?? "unknown"), audioFiles: cleanedAudioFiles,
           mediaUrl: coverUrl, albumId: String(form.get("albumId") ?? "") || null,
-          releaseYear: Number.isInteger(parsedYear) && parsedYear >= 1000 ? parsedYear : null,
+          releaseYear: parsedYear,
           tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean),
           genres: form.getAll("genres").map(String) };
       } else if (mode === "album") {
         if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Album artwork must be 2 MB or smaller.");
         const imageUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
-        const parsedYear = Number(form.get("releaseYear"));
+        const parsedYear = parseReleaseYearFromInput(form.get("releaseDate") ?? form.get("releaseYear"));
         payload = { kind: "album", title, artists: artistNames, collectiveId, bio, mediaUrl: imageUrl,
-          releaseYear: Number.isInteger(parsedYear) && parsedYear > 0 ? parsedYear : null,
-          tracklist: String(form.get("tracklist") ?? "").split("\n").map((track) => track.trim()).filter(Boolean) };
+          releaseYear: parsedYear,
+          tracklist: albumTracks.map((track) => track.trim()).filter(Boolean),
+          genres: form.getAll("genres").map(String) };
       } else if (mode === "collective") {
-        payload = { kind: "collective", title, artists: artistNames, bio };
+        if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Collective images must be 2 MB or smaller.");
+        if (bannerImage && bannerImage.size > 2 * 1024 * 1024) throw new Error("Collective banners must be 2 MB or smaller.");
+        const imageUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
+        const bannerUrl = bannerImage ? await fileAsDataUrl(bannerImage) : null;
+        const uploadedGallery = await Promise.all(galleryImages.map((file) => fileAsDataUrl(file)));
+        payload = {
+          kind: "collective",
+          title,
+          artists: artistNames,
+          bio,
+          mediaUrl: imageUrl,
+          bannerUrl,
+          galleryImages: uploadedGallery,
+        };
       } else {
         if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Artist images must be 2 MB or smaller.");
+        if (bannerImage && bannerImage.size > 2 * 1024 * 1024) throw new Error("Artist banners must be 2 MB or smaller.");
         const imageUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
+        const bannerUrl = bannerImage ? await fileAsDataUrl(bannerImage) : null;
+        const uploadedGallery = await Promise.all(galleryImages.map((file) => fileAsDataUrl(file)));
         payload = {
           kind: "artist",
           title,
           aka: String(form.get("aka") ?? "").split(",").map((name) => name.trim()).filter(Boolean),
           bio,
           mediaUrl: imageUrl,
+          bannerUrl,
+          galleryImages: uploadedGallery,
+          genres: form.getAll("genres").map(String),
         };
       }
 
@@ -129,6 +188,50 @@ export default function ContributionForm() {
     }
   }
 
+  const renderTab = () => {
+    const sharedProps = {
+      entries,
+      albums,
+      artistImage,
+      bannerImage,
+      galleryImages,
+      imagePreview,
+      selectedAlbumId,
+      selectedAlbumTitle,
+      selectedAlbumCollectiveId,
+      selectedAlbumCollectiveTitle,
+      selectedSongCollectiveId,
+      selectedSongCollectiveTitle,
+      setArtistImage,
+      setBannerImage,
+      setGalleryImages,
+      setImagePreview,
+      setSelectedAlbumId,
+      setSelectedAlbumTitle,
+      setSelectedAlbumCollectiveId,
+      setSelectedAlbumCollectiveTitle,
+      setSelectedSongCollectiveId,
+      setSelectedSongCollectiveTitle,
+      albumArtistInput,
+      setAlbumArtistInput,
+      albumTracks,
+      setAlbumTracks,
+      audioFiles,
+      setAudioFiles,
+    };
+
+    switch (mode) {
+      case "song":
+        return <SongTab {...sharedProps} />;
+      case "album":
+        return <AlbumTab {...sharedProps} />;
+      case "collective":
+        return <CollectiveTab {...sharedProps} />;
+      default:
+        return <ArtistTab {...sharedProps} />;
+    }
+  };
+
   return (
     <main className="contribution-page">
       <Link className="back-link" href="/"><ArrowLeft size={15} /> Back to archive</Link>
@@ -141,82 +244,7 @@ export default function ContributionForm() {
             <div className="form-heading"><div><span>NEW {mode.toUpperCase()} ENTRY</span><h2>{mode === "song" ? "Add a song" : mode === "album" ? "Add an album" : mode === "collective" ? "Add a collective" : "Add an artist"}</h2></div><span className="form-step">01 / 01</span></div>
             <label className="field-label" htmlFor="entry-title">{mode === "song" ? "Song title" : mode === "album" ? "Album title" : mode === "collective" ? "Collective name" : "Artist name"}<span>Required</span></label>
             <input id="entry-title" name="title" required maxLength={160} placeholder={mode === "song" ? "What is the track called?" : mode === "album" ? "What is the album called?" : mode === "collective" ? "Name this group" : "Who are we listening to?"} />
-
-            {mode === "song" ? (
-              <>
-                <label className="field-label" htmlFor="entry-artists">Artist(s)<span>Separate with commas</span></label>
-                <input id="entry-artists" name="artists" list="archive-artists" required placeholder="Artist or group" />
-                <datalist id="archive-artists">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
-                <label className="field-label" htmlFor="song-collective">Collective<span>Optional</span></label>
-                <select id="song-collective" name="collectiveId" defaultValue=""><option value="">No collective</option>{entries.filter((entry) => entry.kind === "collective").map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}</select>
-                <label className="field-label" htmlFor="song-album">Album<span>Optional · album artwork is used automatically</span></label>
-                <select id="song-album" name="albumId" value={selectedAlbumId} onChange={(event) => {
-                  const albumId = event.target.value;
-                  setSelectedAlbumId(albumId);
-                  setArtistImage(null);
-                  setImagePreview(albums.find((album) => album.id === albumId)?.mediaUrl ?? "");
-                }}><option value="">No album</option>{albums.map((album) => <option key={album.id} value={album.id}>{album.title}</option>)}</select>
-                <div className="field-row">
-                  <div className="field-group"><label className="field-label" htmlFor="entry-source">Audio source</label><select id="entry-source" name="source" defaultValue="unknown"><option value="soundcloud">SoundCloud</option><option value="spotify">Spotify</option><option value="youtube">YouTube</option><option value="social media">Social media</option><option value="unknown">Unknown</option></select></div>
-                  <div className="field-group"><label className="field-label" htmlFor="entry-audio">Audio files<span>Up to 10 · 8 MB each</span></label><label className="file-picker" htmlFor="entry-audio"><Music2 size={16} /><span>{audioFiles.length ? `${audioFiles.length} files selected` : "Choose audio files"}</span><input id="entry-audio" type="file" multiple accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/aac,audio/ogg,audio/flac,audio/webm" onChange={(event) => setAudioFiles(Array.from(event.target.files ?? []))} required /></label></div>
-                </div>
-                {audioFiles.length > 0 && <ul className="audio-file-list">{audioFiles.map((file) => <li key={`${file.name}-${file.size}`}><Music2 size={13} /><span>{file.name}</span><small>{(file.size / (1024 * 1024)).toFixed(1)} MB</small></li>)}</ul>}
-                <div className="field-row">
-                  <div className="field-group"><label className="field-label" htmlFor="song-release-year">Release year<span>Optional</span></label><input id="song-release-year" name="songReleaseYear" type="number" min="1000" max="3000" placeholder="YYYY" /></div>
-                  <div className="field-group"><label className="field-label" htmlFor="song-tags">Tags<span>Comma-separated</span></label><input id="song-tags" name="tags" placeholder="live, demo, remaster" /></div>
-                </div>
-                <fieldset className="genre-options"><legend>Genres<span>Choose any that fit</span></legend>{Object.values(Genre).map((genre) => <label key={genre}><input type="checkbox" name="genres" value={genre} /><span>{genre}</span></label>)}</fieldset>
-                <label className="field-label" htmlFor="song-image">Song cover<span>Optional · album cover takes priority</span></label>
-                <label className="image-picker" htmlFor="song-image">
-                  {imagePreview ? <Image src={imagePreview} alt="Song cover preview" width={36} height={36} unoptimized /> : <ImagePlus size={22} />}
-                  <span>{artistImage?.name ?? "Choose a cover image"}</span>
-                  <input id="song-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={selectImage} />
-                </label>
-                {imagePreview && <Image className="contribution-image-preview" src={imagePreview} alt="Song cover preview" width={300} height={180} unoptimized />}
-                <label className="field-label" htmlFor="entry-bio">Audio bio / notes<span>Optional</span></label>
-                <textarea id="entry-bio" name="bio" maxLength={2000} rows={3} placeholder="A little context about this recording…" />
-              </>
-            ) : mode === "album" ? (
-              <>
-                <label className="field-label" htmlFor="album-artists">Artist(s)<span>Separate with commas</span></label>
-                <input id="album-artists" name="artists" list="album-artists-list" required placeholder="Artist or group" />
-                <datalist id="album-artists-list">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
-                <label className="field-label" htmlFor="album-collective">Collective<span>Optional</span></label>
-                <select id="album-collective" name="collectiveId" defaultValue=""><option value="">No collective</option>{entries.filter((entry) => entry.kind === "collective").map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}</select>
-                <div className="field-row">
-                  <div className="field-group"><label className="field-label" htmlFor="release-year">Release year<span>Optional</span></label><input id="release-year" name="releaseYear" type="number" min="1000" max="3000" placeholder="YYYY" /></div>
-                  <div className="field-group"><label className="field-label" htmlFor="album-image">Album artwork<span>Optional · up to 2 MB</span></label><label className="file-picker" htmlFor="album-image"><ImagePlus size={16} /><span>{artistImage?.name ?? "Choose image"}</span><input id="album-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => { const file = event.target.files?.[0] ?? null; setArtistImage(file); setImagePreview(file ? URL.createObjectURL(file) : ""); }} /></label></div>
-                </div>
-                <label className="field-label" htmlFor="album-tracklist">Track list<span>Optional · one track per line</span></label>
-                <textarea id="album-tracklist" name="tracklist" maxLength={10000} rows={4} placeholder={"01. Opening track\n02. Another favorite"} />
-                <label className="field-label" htmlFor="entry-bio">Album notes<span>Optional</span></label>
-                <textarea id="entry-bio" name="bio" maxLength={2000} rows={3} placeholder="A little context about this release…" />
-                {imagePreview && <Image className="contribution-image-preview" src={imagePreview} alt="Album artwork preview" width={300} height={180} unoptimized />}
-              </>
-            ) : mode === "collective" ? (
-              <>
-                <label className="field-label" htmlFor="collective-artists">Artists in this collective<span>Separate with commas</span></label>
-                <input id="collective-artists" name="artists" list="collective-artist-list" required placeholder="Add artists from the archive" />
-                <datalist id="collective-artist-list">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
-                <p className="collective-hint"><Users size={14} />Every member must have an artist entry in the archive.</p>
-                <label className="field-label" htmlFor="entry-bio">About this collective<span>Optional</span></label>
-                <textarea id="entry-bio" name="bio" maxLength={2000} rows={4} placeholder="A shared project, crew, or music group…" />
-              </>
-            ) : (
-              <>
-                <label className="field-label" htmlFor="entry-aka">Also known as<span>Separate names with commas</span></label>
-                <input id="entry-aka" name="aka" placeholder="Aliases, former names, alternate spellings" />
-                <label className="field-label" htmlFor="entry-image">Artist image<span>Optional · PNG, JPG, GIF, WebP · up to 2 MB</span></label>
-                <label className="image-picker" htmlFor="entry-image">
-                  {imagePreview ? <Image src={imagePreview} alt="Artist image preview" width={36} height={36} unoptimized /> : <ImagePlus size={22} />}
-                  <span>{artistImage?.name ?? "Choose an image"}</span>
-                  <input id="entry-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={selectImage} />
-                </label>
-                <label className="field-label" htmlFor="entry-bio">Artist bio<span>Optional</span></label>
-                <textarea id="entry-bio" name="bio" maxLength={2000} rows={4} placeholder="What should people know about this artist?" />
-              </>
-            )}
-
+            {renderTab()}
             {message && <p className="form-message" role="alert">{message}</p>}
             <button className="submit-entry" type="submit" disabled={busy}>{busy ? "Saving entry…" : `Add ${mode}`} <ArrowUpRight size={16} /></button>
             <p className="contribution-footnote">By contributing, you confirm this entry is okay to share with the archive.</p>

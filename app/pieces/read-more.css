@@ -1,0 +1,37 @@
+.read-more {
+  display: block;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.read-more-content {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  word-break: break-word;
+}
+
+.read-more-content.is-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+}
+
+.read-more-content.is-expanded {
+  display: block;
+}
+
+.read-more-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

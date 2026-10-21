@@ -7,6 +7,8 @@ import {
   getCurrentUser,
   isAudioDataUrl,
   isImageDataUrl,
+  normalizeArchiveLinks,
+  withAudioFileSummaries,
 } from "@/lib/archive";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,7 @@ export async function GET() {
       e.file_name AS "fileName", e.file_type AS "fileType", e.file_size AS "fileSize",
       e.tracklist, e.tags, e.genres, e.album_id AS "albumId", a.title AS album, e.release_year AS "releaseYear",
       e.collective_id AS "collectiveId", c.title AS collective,
-      e.created_by AS "createdBy", e.created_at AS "createdAt",
+      e.page_views AS "pageViews", e.links, e.created_by AS "createdBy", e.created_at AS "createdAt",
       p.username AS "creatorName", p.image_url AS "creatorImage"
       FROM archive_entries e LEFT JOIN archive_profiles p ON p.user_id = e.created_by
       LEFT JOIN archive_entries c ON c.id = e.collective_id
@@ -29,11 +31,11 @@ export async function GET() {
     const artistRows = await sql`SELECT id, title FROM archive_entries WHERE kind = 'artist' ORDER BY title`;
     const albums = await sql`SELECT id, title, artists, media_url AS "mediaUrl", release_year AS "releaseYear"
       FROM archive_entries WHERE kind = 'album' ORDER BY title`;
+    const songIds = (entries as Array<{ id: string; kind: string }>).filter((entry) => entry.kind === "song").map((entry) => entry.id);
+    const audioRows = songIds.length ? await sql`SELECT id, song_id AS "songId", file_name AS "fileName", file_type AS "fileType", file_size AS "fileSize"
+      FROM archive_audio_files WHERE song_id = ANY(${songIds}) ORDER BY file_size DESC, created_at DESC` : [];
 
-    const entriesWithAudioUrls = (entries as unknown as { id: string; kind: string }[]).map((entry) => ({
-      ...entry,
-      fileUrl: entry.kind === "song" ? `/api/archive/${encodeURIComponent(entry.id)}/audio` : null,
-    }));
+    const entriesWithAudioUrls = withAudioFileSummaries(entries as Array<{ id: string; kind: string; fileUrl?: string | null }>, audioRows as unknown as { songId: string; id: string; fileName: string; fileType: string; fileSize: number | string }[]);
 
     return NextResponse.json({ entries: entriesWithAudioUrls, artists: artistRows, albums });
   } catch {
@@ -61,7 +63,25 @@ export async function POST(request: Request) {
       : [];
     const collectiveId = typeof body.collectiveId === "string" && body.collectiveId ? body.collectiveId : null;
     const albumId = typeof body.albumId === "string" && body.albumId ? body.albumId : null;
-    const releaseYear = Number.isInteger(body.releaseYear) && body.releaseYear >= 1000 && body.releaseYear <= 3000 ? body.releaseYear : null;
+    const parseReleaseYear = (value: unknown) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          const year = Number(trimmed.slice(0, 4));
+          return year >= 1000 && year <= 3000 ? year : null;
+        }
+        const asNumber = Number(trimmed);
+        if (Number.isInteger(asNumber) && asNumber >= 1000 && asNumber <= 3000) {
+          return asNumber;
+        }
+      }
+      if (typeof value === "number" && Number.isInteger(value) && value >= 1000 && value <= 3000) {
+        return value;
+      }
+      return null;
+    };
+    const releaseYear = parseReleaseYear(body.releaseDate ?? body.releaseYear ?? body.songReleaseDate ?? body.songReleaseYear);
     const tags = Array.isArray(body.tags)
       ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 30)
       : [];
@@ -70,6 +90,11 @@ export async function POST(request: Request) {
       : [];
     const source = body.source;
     const mediaUrl = body.mediaUrl;
+    const bannerUrl = typeof body.bannerUrl === "string" ? body.bannerUrl : null;
+    const galleryImages = Array.isArray(body.galleryImages)
+      ? body.galleryImages.filter((item: unknown): item is string => typeof item === "string" && isImageDataUrl(item)).slice(0, 12)
+      : [];
+    const links = normalizeArchiveLinks(body.links);
     const submittedAudioFiles: Record<string, unknown>[] = Array.isArray(body.audioFiles)
       ? body.audioFiles.filter((file: unknown): file is Record<string, unknown> => typeof file === "object" && file !== null)
       : body.fileUrl ? [{ fileUrl: body.fileUrl, fileName: body.fileName, fileType: body.fileType, fileSize: body.fileSize }] : [];
@@ -93,6 +118,12 @@ export async function POST(request: Request) {
     }
     if (["artist", "album", "song"].includes(kind) && mediaUrl !== null && !isImageDataUrl(mediaUrl)) {
       return NextResponse.json({ error: "Images must be supported formats up to 2 MB." }, { status: 400 });
+    }
+    if (bannerUrl !== null && !isImageDataUrl(bannerUrl)) {
+      return NextResponse.json({ error: "Banner images must be supported formats up to 2 MB." }, { status: 400 });
+    }
+    if (galleryImages.some((image: string) => !isImageDataUrl(image))) {
+      return NextResponse.json({ error: "Gallery images must be supported formats up to 2 MB." }, { status: 400 });
     }
     if (kind === "song" && (!audioFiles.length || audioFiles.length > 10 || audioFiles.some((file) => !isAudioDataUrl(file.fileUrl)))) {
       return NextResponse.json({ error: "Add 1 to 10 supported audio files, each up to 8 MB." }, { status: 400 });
@@ -131,14 +162,15 @@ export async function POST(request: Request) {
     await ensureProfile(user);
     const id = crypto.randomUUID();
     await sql`INSERT INTO archive_entries
-      (id, kind, title, aka, artists, bio, source, media_url, file_url, file_name, file_type, file_size, collective_id, album_id, tags, genres, tracklist, release_year, created_by)
+      (id, kind, title, aka, artists, bio, source, media_url, banner_url, gallery_images, file_url, file_name, file_type, file_size, collective_id, album_id, tags, genres, tracklist, links, release_year, created_by)
       VALUES (${id}, ${kind}, ${title}, ${aka}, ${artists}, ${bio},
       ${kind === "song" ? source : null}, ${kind === "song" ? songCoverUrl : ["artist", "album"].includes(kind) && typeof mediaUrl === "string" ? mediaUrl : null},
+      ${kind === "artist" || kind === "collective" ? bannerUrl : null}, ${kind === "artist" || kind === "collective" ? galleryImages : []},
       ${kind === "song" ? primaryAudio.fileUrl : null}, ${kind === "song" ? primaryAudio.fileName : null},
       ${kind === "song" ? primaryAudio.fileType : null}, ${kind === "song" ? primaryAudio.fileSize : null},
       ${["song", "album"].includes(kind) ? collectiveId : null}, ${kind === "song" ? albumId : null},
-      ${kind === "song" ? tags : []}, ${kind === "song" ? genres : []}, ${kind === "album" ? tracklist : []},
-      ${kind === "song" ? songReleaseYear : kind === "album" ? releaseYear : null}, ${user.id})`;
+      ${kind === "song" ? tags : []}, ${["song", "album", "artist"].includes(kind) ? genres : []}, ${kind === "album" ? tracklist : []},
+      ${links}, ${kind === "song" ? songReleaseYear : kind === "album" ? releaseYear : null}, ${user.id})`;
 
     if (kind === "song") {
       for (const file of audioFiles) {

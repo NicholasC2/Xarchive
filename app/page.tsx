@@ -4,6 +4,7 @@ import { FileAudio2, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import ArchiveEntryRow, { ArchiveEntrySummary } from "./pieces/archive-entry-row";
+import SearchInput from "./pieces/search-input";
 import "./page.css";
 
 type ArchiveEntry = ArchiveEntrySummary & {
@@ -13,6 +14,10 @@ type ArchiveEntry = ArchiveEntrySummary & {
   tracklist: string[];
   createdBy: string;
   createdAt: string;
+  pageViews?: number | null;
+  tags: string[];
+  genres: string[];
+  audioFiles: Array<{ id: string; fileName: string; fileType: string; fileSize: number; url: string }>;
 };
 
 type Filter = "all" | "song" | "album" | "artist" | "collective";
@@ -40,22 +45,40 @@ export default function Home({ searchParams }: { searchParams: Promise<{ q?: str
 
   const visibleEntries = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return entries.filter((entry) => {
+    const filteredEntries = entries.filter((entry) => {
       if (filter !== "all" && entry.kind !== filter) return false;
       if (!normalizedQuery) return true;
       return [entry.title, entry.bio, entry.collective ?? "", ...entry.artists, ...entry.aka, ...entry.tracklist]
         .some((value) => value?.toLowerCase().includes(normalizedQuery));
     });
+
+    return [...filteredEntries].sort((left, right) => {
+      const leftViews = Number(left.pageViews ?? 0);
+      const rightViews = Number(right.pageViews ?? 0);
+      if (rightViews !== leftViews) return rightViews - leftViews;
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    }).slice(0, 10);
   }, [entries, filter, query]);
 
   return (
     <main className="archive-page">
-      <header className="archive-page-heading"><h1>Archive</h1><Link className="add-entry-link" href="/contribute"><Plus size={16} /> Add entry</Link></header>
+      <header className="archive-page-heading">
+        <h1>Archive</h1>
+        <div className="archive-header-actions">
+          <Link className="add-entry-link" href="/contribute"><Plus size={16} /> Add entry</Link>
+        </div>
+      </header>
       <section className="archive-content" aria-label="Music archive">
         <div className="archive-heading">
           <label className="collection-search">
             <Search size={17} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search title, artist, collective" aria-label="Search archive" />
+            <SearchInput
+              searchable={Array.from(new Set(entries.flatMap((entry) => [entry.title, ...entry.artists, entry.collective ?? "", ...entry.aka].filter(Boolean))))}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search title, artist, collective"
+              aria-label="Search archive"
+            />
           </label>
         </div>
 

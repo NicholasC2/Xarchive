@@ -11,6 +11,12 @@
   border-bottom: 1px solid var(--line);
 }
 
+.archive-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .archive-page-heading h1 {
   margin: 0;
   font-size: 19px;
@@ -392,6 +398,119 @@
   color: var(--foreground-3);
   font-size: 9px;
   letter-spacing: 0.09em;
+}
+
+.bulk-download-panel {
+  margin: 18px 0 24px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--background-1);
+}
+
+.bulk-download-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bulk-download-header > div {
+  min-width: 0;
+}
+
+.bulk-download-header h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.bulk-download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--foreground-1);
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.top-bar-bulk-download {
+  min-height: 32px;
+}
+
+.bulk-download-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bulk-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bulk-filter-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--foreground-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.bulk-filter-grid input,
+.bulk-filter-grid select {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  background: var(--background-2);
+  color: var(--foreground-1);
+  font-size: 11px;
+}
+
+.bulk-song-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bulk-song-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: var(--background-2);
+  cursor: pointer;
+}
+
+.bulk-song-item input {
+  accent-color: var(--accent);
+}
+
+.bulk-song-item span {
+  overflow: hidden;
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulk-song-item small {
+  color: var(--foreground-3);
+  font-size: 9px;
+}
+
+.bulk-empty {
+  margin: 0;
+  color: var(--foreground-3);
+  font-size: 12px;
 }
 
 @media (max-width: 680px) {
