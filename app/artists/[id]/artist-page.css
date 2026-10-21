@@ -92,6 +92,29 @@
   white-space: pre-wrap;
 }
 
+.artist-record-info .artist-aka {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.artist-record-info .artist-aka .read-more {
+  min-width: 0;
+}
+
+.artist-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.artist-gallery img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+}
+
 .artist-section-heading {
   display: flex;
   align-items: baseline;

@@ -245,6 +245,83 @@
   clip-path: inset(50%);
 }
 
+.contribution-form .audio-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: -2px 0 3px;
+  padding: 0;
+  list-style: none;
+}
+
+.contribution-form .audio-file-list li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: var(--foreground-2);
+  font-size: 10px;
+}
+
+.contribution-form .audio-file-list li svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.contribution-form .audio-file-list li span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contribution-form .audio-file-list li small {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--foreground-3);
+}
+
+.genre-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 3px 0;
+  padding: 0;
+  border: 0;
+}
+
+.genre-options legend {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0;
+  color: var(--foreground-1);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.genre-options legend span {
+  color: var(--foreground-3);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.genre-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  color: var(--foreground-2);
+  cursor: pointer;
+  font-size: 9px;
+}
+
+.genre-options input {
+  accent-color: var(--accent);
+}
+
 .image-picker {
   min-height: 54px;
 }

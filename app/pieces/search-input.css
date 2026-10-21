@@ -1,0 +1,37 @@
+.search-input {
+  position: relative;
+  width: 100%;
+}
+
+.search-input-options {
+  position: absolute;
+  z-index: 30;
+  top: 100%;
+  right: 0;
+  left: 0;
+  display: flex;
+  max-height: 240px;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  background: var(--background-1);
+  list-style: none;
+}
+
+.search-input-options li {
+  padding: 9px 11px;
+  overflow: hidden;
+  color: var(--foreground-2);
+  cursor: pointer;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-input-options li:hover {
+  background: var(--background-2);
+  color: var(--foreground-1);
+}

@@ -7,6 +7,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Genre } from "@/lib/types";
 import { stripAudioMetadata } from "@/lib/audio-processing";
+import SearchInput from "@/app/pieces/search-input";
 import "./contribution-form.css";
 
 type Mode = "song" | "album" | "artist" | "collective";
@@ -27,6 +28,9 @@ export default function ContributionForm() {
   const [entries, setEntries] = useState<ArchiveEntry[]>([]);
   const [albums, setAlbums] = useState<ArchiveEntry[]>([]);
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
+  const [coverImages, setCoverImages] = useState<File[]>([]);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [selectedAlbumId, setSelectedAlbumId] = useState("");
   const [artistImage, setArtistImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -49,6 +53,9 @@ export default function ContributionForm() {
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
     setAudioFiles([]);
+    setCoverImages([]);
+    setBannerImage(null);
+    setGalleryImages([]);
     setArtistImage(null);
     setImagePreview("");
     setSelectedAlbumId("");
@@ -73,6 +80,9 @@ export default function ContributionForm() {
         if (audioFiles.some((file) => file.size > 8 * 1024 * 1024)) throw new Error("Each audio file must be 8 MB or smaller.");
         if (audioFiles.reduce((size, file) => size + file.size, 0) > 32 * 1024 * 1024) throw new Error("The combined audio files must be 32 MB or smaller.");
         const cleanedAudioFiles = [];
+        const audioSource = String(form.get("source") ?? "unknown");
+        const audioBio = String(form.get("audioBio") ?? "").trim();
+        const audioLabels = String(form.get("audioLabels") ?? "").split(",").map((label) => label.trim()).filter(Boolean);
         for (const file of audioFiles) {
           const cleanedFile = await stripAudioMetadata(file);
           if (cleanedFile.size > 8 * 1024 * 1024) throw new Error(`${file.name} exceeds 8 MB after metadata is removed.`);
@@ -81,14 +91,18 @@ export default function ContributionForm() {
             fileName: cleanedFile.name,
             fileType: cleanedFile.type,
             fileSize: cleanedFile.size,
+            source: audioSource,
+            bio: audioBio,
+            labels: audioLabels,
           });
         }
-        if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Song artwork must be 2 MB or smaller.");
-        const coverUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
+        if (coverImages.some((file) => file.size > 2 * 1024 * 1024)) throw new Error("Each song cover must be 2 MB or smaller.");
+        if (coverImages.length > 10) throw new Error("Add up to 10 song cover images.");
+        const covers = await Promise.all(coverImages.map(fileAsDataUrl));
         const parsedYear = Number(form.get("songReleaseYear"));
         payload = { kind: "song", title, artists: artistNames, collectiveId, bio,
-          source: String(form.get("source") ?? "unknown"), audioFiles: cleanedAudioFiles,
-          mediaUrl: coverUrl, albumId: String(form.get("albumId") ?? "") || null,
+          source: audioSource, audioFiles: cleanedAudioFiles,
+          mediaUrl: covers[0] ?? null, coverImages: covers, albumId: String(form.get("albumId") ?? "") || null,
           releaseYear: Number.isInteger(parsedYear) && parsedYear >= 1000 ? parsedYear : null,
           tags: String(form.get("tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean),
           genres: form.getAll("genres").map(String) };
@@ -100,16 +114,22 @@ export default function ContributionForm() {
           releaseYear: Number.isInteger(parsedYear) && parsedYear > 0 ? parsedYear : null,
           tracklist: String(form.get("tracklist") ?? "").split("\n").map((track) => track.trim()).filter(Boolean) };
       } else if (mode === "collective") {
-        payload = { kind: "collective", title, artists: artistNames, bio };
+        if ([artistImage, bannerImage, ...galleryImages].some((file) => file && file.size > 2 * 1024 * 1024)) throw new Error("Each collective image must be 2 MB or smaller.");
+        payload = { kind: "collective", title, artists: artistNames, bio,
+          mediaUrl: artistImage ? await fileAsDataUrl(artistImage) : null,
+          bannerImage: bannerImage ? await fileAsDataUrl(bannerImage) : null,
+          galleryImages: await Promise.all(galleryImages.map(fileAsDataUrl)) };
       } else {
         if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Artist images must be 2 MB or smaller.");
-        const imageUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
+        if ([bannerImage, ...galleryImages].some((file) => file && file.size > 2 * 1024 * 1024)) throw new Error("Each artist image must be 2 MB or smaller.");
         payload = {
           kind: "artist",
           title,
           aka: String(form.get("aka") ?? "").split(",").map((name) => name.trim()).filter(Boolean),
           bio,
-          mediaUrl: imageUrl,
+          mediaUrl: artistImage ? await fileAsDataUrl(artistImage) : null,
+          bannerImage: bannerImage ? await fileAsDataUrl(bannerImage) : null,
+          galleryImages: await Promise.all(galleryImages.map(fileAsDataUrl)),
         };
       }
 
@@ -145,8 +165,7 @@ export default function ContributionForm() {
             {mode === "song" ? (
               <>
                 <label className="field-label" htmlFor="entry-artists">Artist(s)<span>Separate with commas</span></label>
-                <input id="entry-artists" name="artists" list="archive-artists" required placeholder="Artist or group" />
-                <datalist id="archive-artists">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
+                <SearchInput id="entry-artists" name="artists" searchable={entries.filter((entry) => entry.kind === "artist").map((artist) => artist.title)} splitAt="," required placeholder="Artist or group" />
                 <label className="field-label" htmlFor="song-collective">Collective<span>Optional</span></label>
                 <select id="song-collective" name="collectiveId" defaultValue=""><option value="">No collective</option>{entries.filter((entry) => entry.kind === "collective").map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}</select>
                 <label className="field-label" htmlFor="song-album">Album<span>Optional · album artwork is used automatically</span></label>
@@ -162,16 +181,25 @@ export default function ContributionForm() {
                 </div>
                 {audioFiles.length > 0 && <ul className="audio-file-list">{audioFiles.map((file) => <li key={`${file.name}-${file.size}`}><Music2 size={13} /><span>{file.name}</span><small>{(file.size / (1024 * 1024)).toFixed(1)} MB</small></li>)}</ul>}
                 <div className="field-row">
+                  <div className="field-group"><label className="field-label" htmlFor="audio-labels">Audio labels<span>Comma-separated</span></label><input id="audio-labels" name="audioLabels" placeholder="radio edit, clean" /></div>
+                  <div className="field-group"><label className="field-label" htmlFor="audio-bio">Audio version notes<span>Optional</span></label><input id="audio-bio" name="audioBio" maxLength={2000} placeholder="Notes specific to these files" /></div>
+                </div>
+                <div className="field-row">
                   <div className="field-group"><label className="field-label" htmlFor="song-release-year">Release year<span>Optional</span></label><input id="song-release-year" name="songReleaseYear" type="number" min="1000" max="3000" placeholder="YYYY" /></div>
                   <div className="field-group"><label className="field-label" htmlFor="song-tags">Tags<span>Comma-separated</span></label><input id="song-tags" name="tags" placeholder="live, demo, remaster" /></div>
                 </div>
                 <fieldset className="genre-options"><legend>Genres<span>Choose any that fit</span></legend>{Object.values(Genre).map((genre) => <label key={genre}><input type="checkbox" name="genres" value={genre} /><span>{genre}</span></label>)}</fieldset>
-                <label className="field-label" htmlFor="song-image">Song cover<span>Optional · album cover takes priority</span></label>
+                <label className="field-label" htmlFor="song-image">Song covers<span>Optional · first cover is used for exports</span></label>
                 <label className="image-picker" htmlFor="song-image">
-                  {imagePreview ? <Image src={imagePreview} alt="Song cover preview" width={36} height={36} unoptimized /> : <ImagePlus size={22} />}
-                  <span>{artistImage?.name ?? "Choose a cover image"}</span>
-                  <input id="song-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={selectImage} />
+                  {imagePreview ? <Image src={imagePreview} alt="Album cover preview" width={36} height={36} unoptimized /> : <ImagePlus size={22} />}
+                  <span>{coverImages.length ? `${coverImages.length} covers selected` : "Choose cover images"}</span>
+                  <input id="song-image" type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    setCoverImages(files);
+                    setImagePreview("");
+                  }} />
                 </label>
+                {coverImages.map((file) => <span className="cover-file-name" key={`${file.name}-${file.size}`}>{file.name}</span>)}
                 {imagePreview && <Image className="contribution-image-preview" src={imagePreview} alt="Song cover preview" width={300} height={180} unoptimized />}
                 <label className="field-label" htmlFor="entry-bio">Audio bio / notes<span>Optional</span></label>
                 <textarea id="entry-bio" name="bio" maxLength={2000} rows={3} placeholder="A little context about this recording…" />
@@ -179,8 +207,7 @@ export default function ContributionForm() {
             ) : mode === "album" ? (
               <>
                 <label className="field-label" htmlFor="album-artists">Artist(s)<span>Separate with commas</span></label>
-                <input id="album-artists" name="artists" list="album-artists-list" required placeholder="Artist or group" />
-                <datalist id="album-artists-list">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
+                <SearchInput id="album-artists" name="artists" searchable={entries.filter((entry) => entry.kind === "artist").map((artist) => artist.title)} splitAt="," required placeholder="Artist or group" />
                 <label className="field-label" htmlFor="album-collective">Collective<span>Optional</span></label>
                 <select id="album-collective" name="collectiveId" defaultValue=""><option value="">No collective</option>{entries.filter((entry) => entry.kind === "collective").map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}</select>
                 <div className="field-row">
@@ -196,9 +223,14 @@ export default function ContributionForm() {
             ) : mode === "collective" ? (
               <>
                 <label className="field-label" htmlFor="collective-artists">Artists in this collective<span>Separate with commas</span></label>
-                <input id="collective-artists" name="artists" list="collective-artist-list" required placeholder="Add artists from the archive" />
-                <datalist id="collective-artist-list">{entries.filter((entry) => entry.kind === "artist").map((artist) => <option key={artist.title} value={artist.title} />)}</datalist>
+                <SearchInput id="collective-artists" name="artists" searchable={entries.filter((entry) => entry.kind === "artist").map((artist) => artist.title)} splitAt="," required placeholder="Add artists from the archive" />
                 <p className="collective-hint"><Users size={14} />Every member must have an artist entry in the archive.</p>
+                <label className="field-label" htmlFor="collective-image">Profile image<span>Optional</span></label>
+                <label className="file-picker" htmlFor="collective-image"><ImagePlus size={16} /><span>{artistImage?.name ?? "Choose image"}</span><input id="collective-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setArtistImage(event.target.files?.[0] ?? null)} /></label>
+                <label className="field-label" htmlFor="collective-banner">Banner image<span>Optional</span></label>
+                <label className="file-picker" htmlFor="collective-banner"><ImagePlus size={16} /><span>{bannerImage?.name ?? "Choose banner"}</span><input id="collective-banner" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setBannerImage(event.target.files?.[0] ?? null)} /></label>
+                <label className="field-label" htmlFor="collective-gallery">Gallery images<span>Optional · up to 10</span></label>
+                <label className="file-picker" htmlFor="collective-gallery"><ImagePlus size={16} /><span>{galleryImages.length ? `${galleryImages.length} images selected` : "Choose gallery images"}</span><input id="collective-gallery" type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setGalleryImages(Array.from(event.target.files ?? []))} /></label>
                 <label className="field-label" htmlFor="entry-bio">About this collective<span>Optional</span></label>
                 <textarea id="entry-bio" name="bio" maxLength={2000} rows={4} placeholder="A shared project, crew, or music group…" />
               </>
@@ -206,12 +238,16 @@ export default function ContributionForm() {
               <>
                 <label className="field-label" htmlFor="entry-aka">Also known as<span>Separate names with commas</span></label>
                 <input id="entry-aka" name="aka" placeholder="Aliases, former names, alternate spellings" />
-                <label className="field-label" htmlFor="entry-image">Artist image<span>Optional · PNG, JPG, GIF, WebP · up to 2 MB</span></label>
+                <label className="field-label" htmlFor="entry-image">Artist profile image<span>Optional · PNG, JPG, GIF, WebP · up to 2 MB</span></label>
                 <label className="image-picker" htmlFor="entry-image">
                   {imagePreview ? <Image src={imagePreview} alt="Artist image preview" width={36} height={36} unoptimized /> : <ImagePlus size={22} />}
                   <span>{artistImage?.name ?? "Choose an image"}</span>
                   <input id="entry-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={selectImage} />
                 </label>
+                <label className="field-label" htmlFor="artist-banner">Banner image<span>Optional · up to 2 MB</span></label>
+                <label className="file-picker" htmlFor="artist-banner"><ImagePlus size={16} /><span>{bannerImage?.name ?? "Choose banner"}</span><input id="artist-banner" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setBannerImage(event.target.files?.[0] ?? null)} /></label>
+                <label className="field-label" htmlFor="artist-gallery">Gallery images<span>Optional · up to 10</span></label>
+                <label className="file-picker" htmlFor="artist-gallery"><ImagePlus size={16} /><span>{galleryImages.length ? `${galleryImages.length} images selected` : "Choose gallery images"}</span><input id="artist-gallery" type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setGalleryImages(Array.from(event.target.files ?? []))} /></label>
                 <label className="field-label" htmlFor="entry-bio">Artist bio<span>Optional</span></label>
                 <textarea id="entry-bio" name="bio" maxLength={2000} rows={4} placeholder="What should people know about this artist?" />
               </>

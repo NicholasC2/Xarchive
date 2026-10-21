@@ -8,6 +8,8 @@ import {
   isAudioDataUrl,
   isImageDataUrl,
 } from "@/lib/archive";
+import { withAudioFileSummaries } from "@/lib/audio-file-summary";
+import { withArchiveImageSummaries } from "@/lib/archive-image-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,7 @@ export async function GET() {
     await ensureArchiveTables();
     const sql = getArchiveSql();
     const entries = await sql`SELECT e.id, e.kind, e.title, e.aka, e.artists,
-      e.bio, e.source, e.media_url AS "mediaUrl",
+      e.bio, e.source, CASE WHEN e.kind = 'song' THEN NULL ELSE e.media_url END AS "mediaUrl",
       e.file_name AS "fileName", e.file_type AS "fileType", e.file_size AS "fileSize",
       e.tracklist, e.tags, e.genres, e.album_id AS "albumId", a.title AS album, e.release_year AS "releaseYear",
       e.collective_id AS "collectiveId", c.title AS collective,
@@ -26,16 +28,31 @@ export async function GET() {
       LEFT JOIN archive_entries c ON c.id = e.collective_id
       LEFT JOIN archive_entries a ON a.id = e.album_id
       ORDER BY e.created_at DESC LIMIT 100`;
-    const artistRows = await sql`SELECT id, title FROM archive_entries WHERE kind = 'artist' ORDER BY title`;
+    const artistRows = await sql`SELECT id, title FROM archive_entries WHERE kind = 'artist' ORDER BY title LIMIT 300`;
     const albums = await sql`SELECT id, title, artists, media_url AS "mediaUrl", release_year AS "releaseYear"
-      FROM archive_entries WHERE kind = 'album' ORDER BY title`;
+      FROM archive_entries WHERE kind = 'album' ORDER BY title LIMIT 300`;
 
-    const entriesWithAudioUrls = (entries as unknown as { id: string; kind: string }[]).map((entry) => ({
-      ...entry,
-      fileUrl: entry.kind === "song" ? `/api/archive/${encodeURIComponent(entry.id)}/audio` : null,
-    }));
+    const entryIds = (entries as unknown as { id: string }[]).map((entry) => entry.id);
+    const audioRows = entryIds.length
+      ? await sql`SELECT id, song_id AS "songId", file_name AS "fileName", file_type AS "fileType", file_size AS "fileSize",
+          source, bio, labels
+          FROM archive_audio_files WHERE song_id = ANY(${entryIds})
+          ORDER BY CASE WHEN LOWER(file_type || ' ' || file_name) ~ '(flac|wav|wave|alac|aiff|ape|wv)' THEN 0 ELSE 1 END, file_size DESC`
+      : [];
+    const entriesWithAudioUrls = withAudioFileSummaries(
+      entries as unknown as { id: string; kind: string; fileUrl?: string | null }[],
+      audioRows as unknown as import("@/lib/audio-file-summary").AudioFileRow[],
+    );
+    const imageRows = entryIds.length
+      ? await sql`SELECT id, entry_id AS "entryId" FROM archive_entry_images
+          WHERE entry_id = ANY(${entryIds}) ORDER BY created_at, id`
+      : [];
+    const entriesWithImages = withArchiveImageSummaries(
+      entriesWithAudioUrls as (typeof entriesWithAudioUrls[number] & { mediaUrl?: string | null })[],
+      imageRows as unknown as import("@/lib/archive-image-summary").ArchiveImageRow[],
+    );
 
-    return NextResponse.json({ entries: entriesWithAudioUrls, artists: artistRows, albums });
+    return NextResponse.json({ entries: entriesWithImages, artists: artistRows, albums });
   } catch {
     return NextResponse.json({ error: "The archive is temporarily unavailable." }, { status: 503 });
   }
@@ -70,10 +87,14 @@ export async function POST(request: Request) {
       : [];
     const source = body.source;
     const mediaUrl = body.mediaUrl;
+    const bannerImage = body.bannerImage;
+    const galleryImages: string[] = Array.isArray(body.galleryImages)
+      ? body.galleryImages.filter((image: unknown): image is string => typeof image === "string")
+      : [];
     const submittedAudioFiles: Record<string, unknown>[] = Array.isArray(body.audioFiles)
       ? body.audioFiles.filter((file: unknown): file is Record<string, unknown> => typeof file === "object" && file !== null)
       : body.fileUrl ? [{ fileUrl: body.fileUrl, fileName: body.fileName, fileType: body.fileType, fileSize: body.fileSize }] : [];
-    const audioFiles: { fileUrl: unknown; fileName: string; fileType: string; fileSize: number }[] = submittedAudioFiles.map((file) => {
+    const audioFiles: { fileUrl: unknown; fileName: string; fileType: string; fileSize: number; source: string; bio: string; labels: string[] }[] = submittedAudioFiles.map((file) => {
       const fileUrl = file.fileUrl;
       const match = typeof fileUrl === "string" ? /^data:(audio\/(?:mpeg|wav|x-wav|mp4|aac|ogg|flac|webm));base64,/.exec(fileUrl) : null;
       return {
@@ -81,9 +102,18 @@ export async function POST(request: Request) {
         fileName: typeof file.fileName === "string" ? file.fileName.slice(0, 180) : "audio",
         fileType: typeof file.fileType === "string" ? file.fileType.slice(0, 100) : match?.[1] ?? "audio/mpeg",
         fileSize: typeof file.fileSize === "number" && file.fileSize > 0 ? Math.floor(file.fileSize) : 0,
+        source: typeof file.source === "string" && audioSources.includes(file.source as typeof audioSources[number])
+          ? file.source
+          : typeof source === "string" && audioSources.includes(source as typeof audioSources[number]) ? source : "unknown",
+        bio: typeof file.bio === "string" ? file.bio.trim().slice(0, 2000) : "",
+        labels: Array.isArray(file.labels)
+          ? file.labels.filter((label: unknown): label is string => typeof label === "string").map((label: string) => label.trim().toLowerCase()).filter(Boolean).slice(0, 30)
+          : [],
       };
     });
-    const primaryAudio = audioFiles[0];
+    const coverImages: string[] = Array.isArray(body.coverImages)
+      ? body.coverImages.filter((image: unknown): image is string => typeof image === "string").slice(0, 10)
+      : typeof mediaUrl === "string" ? [mediaUrl] : [];
 
     if (!title || title.length > 160 || !["song", "artist", "album", "collective"].includes(kind)) {
       return NextResponse.json({ error: "Add a valid title." }, { status: 400 });
@@ -91,8 +121,15 @@ export async function POST(request: Request) {
     if (["song", "album", "collective"].includes(kind) && artists.length === 0) {
       return NextResponse.json({ error: kind === "collective" ? "Add at least one artist to this collective." : "Add at least one artist." }, { status: 400 });
     }
-    if (["artist", "album", "song"].includes(kind) && mediaUrl !== null && !isImageDataUrl(mediaUrl)) {
+    if (["artist", "album", "song", "collective"].includes(kind) && mediaUrl != null && !isImageDataUrl(mediaUrl)) {
       return NextResponse.json({ error: "Images must be supported formats up to 2 MB." }, { status: 400 });
+    }
+    if (kind === "song" && (coverImages.length > 10 || coverImages.some((image) => !isImageDataUrl(image)))) {
+      return NextResponse.json({ error: "Add up to 10 supported song covers, each up to 2 MB." }, { status: 400 });
+    }
+    if (["artist", "collective"].includes(kind) &&
+      ((bannerImage != null && !isImageDataUrl(bannerImage)) || galleryImages.length > 10 || galleryImages.some((image) => !isImageDataUrl(image)))) {
+      return NextResponse.json({ error: "Add supported profile, banner, and gallery images up to 2 MB each." }, { status: 400 });
     }
     if (kind === "song" && (!audioFiles.length || audioFiles.length > 10 || audioFiles.some((file) => !isAudioDataUrl(file.fileUrl)))) {
       return NextResponse.json({ error: "Add 1 to 10 supported audio files, each up to 8 MB." }, { status: 400 });
@@ -119,13 +156,13 @@ export async function POST(request: Request) {
       const [collective] = collectiveRows as unknown as { id: string }[];
       if (!collective) return NextResponse.json({ error: "Choose a collective from the archive." }, { status: 400 });
     }
-    let songCoverUrl = typeof mediaUrl === "string" ? mediaUrl : null;
     let songReleaseYear = releaseYear;
+    let albumCoverUrl: string | null = null;
     if (kind === "song" && albumId) {
       const albumRows = await sql`SELECT media_url, release_year FROM archive_entries WHERE id = ${albumId} AND kind = 'album'`;
       const [album] = albumRows as unknown as { media_url: string | null; release_year: number | null }[];
       if (!album) return NextResponse.json({ error: "Choose an album from the archive." }, { status: 400 });
-      if (album.media_url) songCoverUrl = album.media_url;
+      albumCoverUrl = album.media_url;
       songReleaseYear ??= album.release_year;
     }
     await ensureProfile(user);
@@ -133,17 +170,31 @@ export async function POST(request: Request) {
     await sql`INSERT INTO archive_entries
       (id, kind, title, aka, artists, bio, source, media_url, file_url, file_name, file_type, file_size, collective_id, album_id, tags, genres, tracklist, release_year, created_by)
       VALUES (${id}, ${kind}, ${title}, ${aka}, ${artists}, ${bio},
-      ${kind === "song" ? source : null}, ${kind === "song" ? songCoverUrl : ["artist", "album"].includes(kind) && typeof mediaUrl === "string" ? mediaUrl : null},
-      ${kind === "song" ? primaryAudio.fileUrl : null}, ${kind === "song" ? primaryAudio.fileName : null},
-      ${kind === "song" ? primaryAudio.fileType : null}, ${kind === "song" ? primaryAudio.fileSize : null},
+      ${null}, ${kind === "song" ? null : ["artist", "album", "collective"].includes(kind) && typeof mediaUrl === "string" ? mediaUrl : null},
+      ${null}, ${null}, ${null}, ${null},
       ${["song", "album"].includes(kind) ? collectiveId : null}, ${kind === "song" ? albumId : null},
       ${kind === "song" ? tags : []}, ${kind === "song" ? genres : []}, ${kind === "album" ? tracklist : []},
       ${kind === "song" ? songReleaseYear : kind === "album" ? releaseYear : null}, ${user.id})`;
 
     if (kind === "song") {
+      const coversToSave = coverImages.length ? coverImages : albumCoverUrl ? [albumCoverUrl] : [];
+      for (const [index, imageUrl] of coversToSave.entries()) {
+        await sql`INSERT INTO archive_entry_images (id, entry_id, image_url, image_kind, alt)
+          VALUES (${crypto.randomUUID()}, ${id}, ${imageUrl}, 'cover', ${index === 0 ? `${title} cover` : `${title} alternate cover ${index + 1}`})`;
+      }
       for (const file of audioFiles) {
-        await sql`INSERT INTO archive_audio_files (id, song_id, file_url, file_name, file_type, file_size)
-          VALUES (${crypto.randomUUID()}, ${id}, ${file.fileUrl}, ${file.fileName}, ${file.fileType}, ${file.fileSize})`;
+        await sql`INSERT INTO archive_audio_files (id, song_id, file_url, file_name, file_type, file_size, source, bio, labels)
+          VALUES (${crypto.randomUUID()}, ${id}, ${file.fileUrl}, ${file.fileName}, ${file.fileType}, ${file.fileSize}, ${file.source}, ${file.bio}, ${file.labels})`;
+      }
+    }
+    if (["artist", "collective"].includes(kind)) {
+      if (typeof bannerImage === "string") {
+        await sql`INSERT INTO archive_entry_images (id, entry_id, image_url, image_kind, alt)
+          VALUES (${crypto.randomUUID()}, ${id}, ${bannerImage}, 'banner', ${`${title} banner`})`;
+      }
+      for (const [index, imageUrl] of galleryImages.entries()) {
+        await sql`INSERT INTO archive_entry_images (id, entry_id, image_url, image_kind, alt)
+          VALUES (${crypto.randomUUID()}, ${id}, ${imageUrl}, 'gallery', ${`${title} image ${index + 1}`})`;
       }
     }
 

@@ -13,6 +13,7 @@ export type DownloadTrack = {
   fileType?: string | null;
   fileUrl: string;
   coverUrl?: string | null;
+  source?: string | null;
 };
 
 let ffmpegPromise: Promise<FFmpeg> | null = null;
@@ -21,7 +22,7 @@ async function getFFmpeg() {
   if (!ffmpegPromise) {
     ffmpegPromise = (async () => {
       const ffmpeg = new FFmpeg();
-      const coreBase = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
+      const coreBase = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm";
       const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, "text/javascript");
       const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, "application/wasm");
       await ffmpeg.load({ coreURL, wasmURL });
@@ -89,11 +90,15 @@ export async function createTaggedAudio(track: DownloadTrack) {
   const coverPath = `cover-${crypto.randomUUID()}.${coverExtension}`;
   const outputPath = `tagged-${crypto.randomUUID()}.${extension}`;
   try {
-    const audioBytes = new Uint8Array(await (await fetch(track.fileUrl)).arrayBuffer());
+    const audioResponse = await fetch(track.fileUrl);
+    if (!audioResponse.ok) throw new Error(`Could not download the source audio for ${track.title}.`);
+    const audioBytes = new Uint8Array(await audioResponse.arrayBuffer());
     await ffmpeg.writeFile(inputPath, audioBytes);
     const args = ["-i", inputPath];
     if (track.coverUrl) {
-      const coverBytes = new Uint8Array(await (await fetch(track.coverUrl)).arrayBuffer());
+      const coverResponse = await fetch(track.coverUrl);
+      if (!coverResponse.ok) throw new Error(`Could not load cover art for ${track.title}.`);
+      const coverBytes = new Uint8Array(await coverResponse.arrayBuffer());
       await ffmpeg.writeFile(coverPath, coverBytes);
       args.push("-i", coverPath, "-map", "0:a:0", "-map", "1:v:0");
     } else {
@@ -108,6 +113,7 @@ export async function createTaggedAudio(track: DownloadTrack) {
       "-metadata", `date=${track.releaseYear || ""}`,
       "-metadata", `genre=${(track.genres ?? []).join("; ")}`,
       "-metadata", `comment=${(track.tags ?? []).join(", ")}`,
+      "-metadata", `source=${track.source ?? ""}`,
     );
     if (track.coverUrl) {
       args.push(

@@ -4,6 +4,9 @@ export type AudioFileRow = {
   fileName: string;
   fileType: string;
   fileSize: number | string;
+  source?: string | null;
+  bio?: string;
+  labels?: string[];
 };
 
 export type AudioFileSummary = {
@@ -12,14 +15,25 @@ export type AudioFileSummary = {
   fileType: string;
   fileSize: number;
   url: string;
+  source: string | null;
+  bio: string;
+  labels: string[];
 };
+
+function qualityRank(audio: AudioFileRow) {
+  const format = `${audio.fileType} ${audio.fileName}`.toLowerCase();
+  return /\b(flac|wav|wave|alac|aiff|ape|wv)\b/.test(format) ? 0 : 1;
+}
 
 export function withAudioFileSummaries<T extends { id: string; kind: string; fileUrl?: string | null }>(
   entries: T[],
   audioRows: AudioFileRow[],
 ) {
   const audioBySong = new Map<string, AudioFileSummary[]>();
-  for (const audio of audioRows) {
+  const sortedAudioRows = [...audioRows].sort((left, right) =>
+    qualityRank(left) - qualityRank(right) || Number(right.fileSize) - Number(left.fileSize),
+  );
+  for (const audio of sortedAudioRows) {
     const files = audioBySong.get(audio.songId) ?? [];
     files.push({
       id: audio.id,
@@ -27,6 +41,9 @@ export function withAudioFileSummaries<T extends { id: string; kind: string; fil
       fileType: audio.fileType,
       fileSize: Number(audio.fileSize),
       url: `/api/archive/${encodeURIComponent(audio.songId)}/audio?file=${encodeURIComponent(audio.id)}`,
+      source: audio.source ?? null,
+      bio: audio.bio ?? "",
+      labels: audio.labels ?? [],
     });
     audioBySong.set(audio.songId, files);
   }

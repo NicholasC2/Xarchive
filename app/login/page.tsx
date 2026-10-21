@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
 import "../pieces/auth.css";
 
 export default function Login() {
@@ -15,19 +16,14 @@ export default function Login() {
         setBusy(true);
         setError("");
 
-        const data = Object.fromEntries(
-            new FormData(event.currentTarget)
-        );
+        const data = new FormData(event.currentTarget);
 
         try {
-            const response = await fetch("/api/auth/sign-in/email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ email: data.email, password: data.password }),
+            const { error } = await authClient.signIn.email({
+                email: String(data.get("email") ?? ""),
+                password: String(data.get("password") ?? ""),
             });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Could not sign in. Check your details and try again.");
+            if (error) throw new Error(error.message || "Could not sign in. Check your details and try again.");
             router.replace("/");
             router.refresh();
         } catch (reason) {

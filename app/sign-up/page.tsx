@@ -3,9 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
 import "../pieces/auth.css";
-
-const emailReg = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export default function SignUp() {
     const router = useRouter();
@@ -16,35 +15,30 @@ export default function SignUp() {
         event.preventDefault();
         setError("");
 
-        const data = Object.fromEntries(
-            new FormData(event.currentTarget)
-        );
+        const data = new FormData(event.currentTarget);
+        const email = String(data.get("email") ?? "");
+        const password = String(data.get("password") ?? "");
+        const confirmPassword = String(data.get("confirmPassword") ?? "");
+        const username = String(data.get("username") ?? "");
 
-        if (data.password.toString().length < 8) {
+        if (password.length < 8) {
             setError("Password must be at least 8 characters");
             return;
         }
 
-        if (data.password !== data.confirmPassword) {
+        if (password !== confirmPassword) {
             setError("Passwords must match!");
-            return;
-        }
-
-        if (!emailReg.test(data.email.toString())) {
-            setError("Invalid email format!");
             return;
         }
 
         setBusy(true);
         try {
-            const response = await fetch("/api/auth/sign-up/email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ email: data.email, password: data.password, name: data.username }),
+            const { error } = await authClient.signUp.email({
+                email,
+                password,
+                name: username,
             });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Could not create your account.");
+            if (error) throw new Error(error.message || "Could not create your account.");
             router.replace("/");
             router.refresh();
         } catch (reason) {

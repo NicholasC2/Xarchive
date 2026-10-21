@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
+import ReadMore from "@/app/pieces/read-more";
 import "./artist-page.css";
 
-type Artist = { id: string; title: string; aka: string[]; bio: string; imageUrl: string | null };
+type Artist = { id: string; title: string; aka: string[]; bio: string; imageUrl: string | null; images?: { id: string; url: string; kind: string; alt: string }[] };
 type RelatedEntry = { id: string; kind: "song" | "album" | "artist" | "collective"; title: string; artists: string[]; bio: string; source: string | null; fileUrl: string | null; mediaUrl: string | null; tracklist: string[]; releaseYear: number | null; collective: string | null };
 
 export default function ArtistPage() {
@@ -49,8 +50,9 @@ export default function ArtistPage() {
         </section>
         <aside className="artist-sidebar">
           <div className="artist-photo">{artist.imageUrl ? <Image src={artist.imageUrl} alt="" width={104} height={104} unoptimized /> : <Users size={28} />}</div>
-          <div className="artist-record-info"><span>ARTIST</span><h2>{artist.title}</h2>{artist.aka.length > 0 && <p><strong>AKA</strong> {artist.aka.join(", ")}</p>}</div>
-          {artist.bio && <p className="artist-bio">{artist.bio}</p>}
+          <div className="artist-record-info"><span>ARTIST</span><h2>{artist.title}</h2>{artist.aka.length > 0 && <p className="artist-aka"><strong>AKA</strong> <ReadMore text={artist.aka.join(", ")} lines={1} /></p>}</div>
+          {artist.bio && <div className="artist-bio"><ReadMore text={artist.bio} lines={5} /></div>}
+          {artist.images && artist.images.length > 1 && <div className="artist-gallery">{artist.images.map((image) => <Image key={image.id} src={image.url} alt={image.alt} width={70} height={70} unoptimized />)}</div>}
         </aside>
       </div>
     </main>

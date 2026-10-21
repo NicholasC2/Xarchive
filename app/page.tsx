@@ -1,91 +1,70 @@
 "use client";
 
-import { FileAudio2, Plus, Search } from "lucide-react";
+import { ArrowRight, Disc3, Plus, Users } from "lucide-react";
 import Link from "next/link";
-import { use, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ArchiveEntryRow, { ArchiveEntrySummary } from "./pieces/archive-entry-row";
 import "./page.css";
 
-type ArchiveEntry = ArchiveEntrySummary & {
-  aka: string[];
-  artists: string[];
-  fileName: string | null;
-  tracklist: string[];
-  createdBy: string;
-  createdAt: string;
-};
+type HomeArtist = ArchiveEntrySummary & { aka?: string[]; bio?: string; views: number };
+type HomeSong = ArchiveEntrySummary & { artists: string[]; bio?: string; downloads: number; genres: string[]; tags: string[] };
 
-type Filter = "all" | "song" | "album" | "artist" | "collective";
-
-export default function Home({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q = "" } = use(searchParams);
-  const [entries, setEntries] = useState<ArchiveEntry[]>([]);
-  const [artistIds, setArtistIds] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<Filter>("all");
-  const [query, setQuery] = useState(q);
+export default function Home() {
+  const [artists, setArtists] = useState<HomeArtist[]>([]);
+  const [songs, setSongs] = useState<HomeSong[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const artistIds = Object.fromEntries(artists.map((artist) => [artist.title.toLowerCase(), artist.id]));
 
   useEffect(() => {
-    fetch("/api/archive")
+    fetch("/api/archive/home")
       .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Could not load the archive.");
-        setEntries(data.entries);
-        setArtistIds(Object.fromEntries((data.artists as { id: string; title: string }[]).map((artist) => [artist.title.toLowerCase(), artist.id])));
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not load the archive.");
+        setArtists(result.artists);
+        setSongs(result.songs);
       })
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const visibleEntries = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return entries.filter((entry) => {
-      if (filter !== "all" && entry.kind !== filter) return false;
-      if (!normalizedQuery) return true;
-      return [entry.title, entry.bio, entry.collective ?? "", ...entry.artists, ...entry.aka, ...entry.tracklist]
-        .some((value) => value?.toLowerCase().includes(normalizedQuery));
-    });
-  }, [entries, filter, query]);
-
   return (
-    <main className="archive-page">
-      <header className="archive-page-heading"><h1>Archive</h1><Link className="add-entry-link" href="/contribute"><Plus size={16} /> Add entry</Link></header>
-      <section className="archive-content" aria-label="Music archive">
-        <div className="archive-heading">
-          <label className="collection-search">
-            <Search size={17} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search title, artist, collective" aria-label="Search archive" />
-          </label>
+    <main className="archive-page home-page">
+      <header className="home-hero">
+        <div>
+          <p className="eyebrow">A COMMUNITY-BUILT MUSIC ARCHIVE</p>
+          <h1>Listen closer.<br /><span>Keep the record.</span></h1>
+          <p>Discover songs, artists, albums, and the stories behind the recordings.</p>
+          <div className="home-actions">
+            <Link className="home-primary-action" href="/search">Explore the archive <ArrowRight size={16} /></Link>
+            <Link className="home-secondary-action" href="/contribute"><Plus size={15} /> Contribute</Link>
+          </div>
         </div>
+        <div className="home-hero-mark" aria-hidden="true"><Disc3 size={116} strokeWidth={0.7} /><span>X</span></div>
+      </header>
 
-        <div className="archive-toolbar">
-          <div className="archive-filters" role="group" aria-label="Filter archive">
-            {(["all", "song", "album", "artist", "collective"] as const).map((item) => (
-              <button key={item} className={filter === item ? "filter-active" : ""} onClick={() => setFilter(item)}>
-                {item === "all" ? "Everything" : item === "song" ? "Songs" : item === "album" ? "Albums" : item === "artist" ? "Artists" : "Collectives"}
-              </button>
-            ))}
-          </div>
-          <span className="entry-count">{visibleEntries.length} {visibleEntries.length === 1 ? "ENTRY" : "ENTRIES"}</span>
+      {loading ? <div className="archive-state">Opening the archive…</div> : error ? (
+        <div className="archive-state archive-error">{error}</div>
+      ) : (
+        <div className="home-shelves">
+          <section aria-labelledby="home-songs-heading">
+            <div className="home-shelf-heading"><div><span>BY LISTENS</span><h2 id="home-songs-heading">Popular songs</h2></div><Link href="/search?type=song">All songs <ArrowRight size={14} /></Link></div>
+            {songs.length
+              ? <div className="entry-list">{songs.map((song) => <ArchiveEntryRow key={song.id} entry={{ ...song, artistIds }} showContributor />)}</div>
+              : <p className="home-empty">Songs added to the archive will appear here.</p>}
+          </section>
+          <section aria-labelledby="home-artists-heading">
+            <div className="home-shelf-heading"><div><span>BY COMMUNITY VIEWS</span><h2 id="home-artists-heading">Artists</h2></div><Link href="/search?type=artist">All artists <ArrowRight size={14} /></Link></div>
+            {artists.length
+              ? <div className="home-artist-grid">{artists.map((artist) => (
+                <Link className="home-artist-card" key={artist.id} href={`/artists/${encodeURIComponent(artist.id)}`}>
+                  <span className="home-artist-icon"><Users size={19} /></span><span><strong>{artist.title}</strong><small>{artist.views} views</small></span><ArrowRight size={14} />
+                </Link>
+              ))}</div>
+              : <p className="home-empty">Artist contributions will appear here.</p>}
+          </section>
         </div>
-
-        {loading ? (
-          <div className="archive-state">Opening the archive…</div>
-        ) : error ? (
-          <div className="archive-state archive-error">{error}</div>
-        ) : visibleEntries.length ? (
-          <div className="entry-list">
-            {visibleEntries.map((entry) => <ArchiveEntryRow key={entry.id} entry={{ ...entry, artistIds }} showContributor />)}
-          </div>
-        ) : (
-          <div className="empty-archive">
-            <FileAudio2 size={27} strokeWidth={1.4} />
-            <div><h3>{query ? "Nothing found" : "The first entry is yours."}</h3><p>{query ? "Try a different title, artist, or search." : "Add a song, album, artist, or collective to start the collection."}</p></div>
-            <Link href="/contribute" aria-label="Add an archive entry"><Plus size={19} /></Link>
-          </div>
-        )}
-      </section>
+      )}
     </main>
   );
 }

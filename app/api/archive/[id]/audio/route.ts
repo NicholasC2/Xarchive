@@ -1,34 +1,40 @@
-import { ensureArchiveTables, getArchiveSql } from "@/lib/archive";
+import { ensureArchiveTables, getArchiveSql, recordArchiveActivity } from "@/lib/archive";
+import { createAudioResponse } from "@/lib/audio-response";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     await ensureArchiveTables();
     const sql = getArchiveSql();
-    const rows = await sql`SELECT file_url AS "fileUrl", file_name AS "fileName", file_type AS "fileType"
-      FROM archive_entries WHERE id = ${id} AND kind = 'song' LIMIT 1`;
-    const [audio] = rows as unknown as { fileUrl: string | null; fileName: string | null; fileType: string | null }[];
-    if (!audio?.fileUrl) return new Response("Audio not found.", { status: 404 });
+    const selectedFileId = new URL(request.url).searchParams.get("file");
+    let audio: { fileUrl: string | null; fileName: string | null; fileType: string | null } | undefined;
 
-    const match = /^data:audio\/(mpeg|wav|x-wav|mp4|aac|ogg|flac|webm);base64,([A-Za-z0-9+/=]+)$/.exec(audio.fileUrl);
-    if (!match) return new Response("Audio is unavailable.", { status: 404 });
+    if (selectedFileId) {
+      const rows = await sql`SELECT f.file_url AS "fileUrl", f.file_name AS "fileName", f.file_type AS "fileType"
+        FROM archive_audio_files f JOIN archive_entries e ON e.id = f.song_id
+        WHERE e.id = ${id} AND e.kind = 'song' AND f.id = ${selectedFileId} LIMIT 1`;
+      [audio] = rows as unknown as typeof audio[];
+      if (!audio) return new Response("Audio not found.", { status: 404 });
+    } else {
+      const rows = await sql`SELECT f.file_url AS "fileUrl", f.file_name AS "fileName", f.file_type AS "fileType"
+        FROM archive_audio_files f JOIN archive_entries e ON e.id = f.song_id
+        WHERE e.id = ${id} AND e.kind = 'song'
+        ORDER BY CASE WHEN LOWER(f.file_type || ' ' || f.file_name) ~ '(flac|wav|wave|alac|aiff|ape|wv)' THEN 0 ELSE 1 END,
+          f.file_size DESC LIMIT 1`;
+      [audio] = rows as unknown as typeof audio[];
 
-    const decoded = Buffer.from(match[2], "base64");
-    const body = new Uint8Array(decoded.byteLength);
-    body.set(decoded);
-    const extension = audio.fileName?.split(".").pop() || match[1];
-    const fileName = audio.fileName || `${id}.${extension}`;
+      if (!audio) {
+        const legacyRows = await sql`SELECT file_url AS "fileUrl", file_name AS "fileName", file_type AS "fileType"
+          FROM archive_entries WHERE id = ${id} AND kind = 'song' LIMIT 1`;
+        [audio] = legacyRows as unknown as typeof audio[];
+      }
+    }
 
-    return new Response(body, {
-      headers: {
-        "Content-Type": audio.fileType || `audio/${match[1]}`,
-        "Content-Length": String(body.byteLength),
-        "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`,
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
+    const download = new URL(request.url).searchParams.get("download") === "1";
+    if (download) await recordArchiveActivity(id, "downloads");
+    return createAudioResponse(audio, { download, fallbackFileName: id });
   } catch {
     return new Response("Audio is temporarily unavailable.", { status: 503 });
   }
