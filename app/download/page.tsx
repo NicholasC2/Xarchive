@@ -4,5 +4,7 @@ import "./download-page.css";
 export const metadata = { title: "Bulk download | Xarchive" };
 
 export default function DownloadPage() {
-  return <main className="download-page"><BulkAudioDownload /></main>;
+  return <main className="archive-page">
+    
+  </main>;
 }

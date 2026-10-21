@@ -40,8 +40,13 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
       )}
       {user ? (
         <div className="nav-account">
-          <Link className="nav-profile" href={`/profile/${encodeURIComponent(user.id)}`}>{user.name || user.email || "Profile"}</Link>
-          <LogoutButton />
+          <Link className="nav-profile" href={`/profile/${encodeURIComponent(user.id)}`}>{user.name || user.email || "Profile"}</Link>  
+          <button className="logout-button" onClick={()=>{
+              authClient.signOut().then(()=>{
+                  router.replace("/");
+                  router.refresh();
+              });
+          }} aria-label="Log out" title="Log out"><LogOut size={15} /></button>
         </div>
       ) : (
         <div className="nav-account">

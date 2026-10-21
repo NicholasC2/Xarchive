@@ -18,7 +18,7 @@ export interface Artist {
     id: string;
     name: string;
     bio: string;
-    aka?: string[];
+    aka?: string;
 
     profilePhoto?: Image | undefined;
 }
