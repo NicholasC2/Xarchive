@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Download, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
 import ReadMore from "@/app/pieces/read-more";
@@ -19,6 +19,7 @@ export default function ArtistPage() {
   const [artistIds, setArtistIds] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -42,7 +43,12 @@ export default function ArtistPage() {
 
   return (
     <main className="artist-page">
-      <Link className="artist-back-link" href="/"><ArrowLeft size={15} /> Archive</Link>
+      <div className="artist-page-actions">
+        <Link className="artist-back-link" href="/"><ArrowLeft size={15} /> Archive</Link>
+        <button type="button" className="bulk-download-button" onClick={() => router.push(`/bulk?type=artist&id=${encodeURIComponent(params.id)}`)} disabled={!entries.some((entry) => entry.kind === "song")}>
+          <Download size={15} /> Download artist
+        </button>
+      </div>
       <div className="artist-layout">
         <section className="artist-main" aria-label="Artist archive entries">
           <header className="artist-section-heading"><h1>Archive entries</h1><span>{entries.length}</span></header>

@@ -6,7 +6,8 @@ import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import "./profile.css";
 
-type Profile = { username: string; bio: string; imageUrl: string | null };
+type ProfileLink = { label: string; url: string; icon: string };
+type Profile = { username: string; bio: string; imageUrl: string | null; links: ProfileLink[] };
 
 function fileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -18,7 +19,7 @@ function fileAsDataUrl(file: File) {
 }
 
 export default function ProfileEditor() {
-  const [profile, setProfile] = useState<Profile>({ username: "", bio: "", imageUrl: null });
+  const [profile, setProfile] = useState<Profile>({ username: "", bio: "", imageUrl: null, links: [] });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -27,9 +28,22 @@ export default function ProfileEditor() {
     fetch("/api/profiles/me").then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Sign in to edit your profile.");
-      setProfile(data.profile);
+      const profileLinks = Array.isArray(data.profile?.links) ? data.profile.links.map((link: { label?: string; url?: string; icon?: string }) => ({ label: typeof link.label === "string" ? link.label : "", url: typeof link.url === "string" ? link.url : "", icon: typeof link.icon === "string" ? link.icon : "website" })) : [];
+      setProfile({ username: data.profile.username ?? "", bio: data.profile.bio ?? "", imageUrl: data.profile.imageUrl ?? null, links: profileLinks });
     }).catch((reason: Error) => setMessage(reason.message)).finally(() => setLoading(false));
   }, []);
+
+  function updateProfileLink(index: number, patch: Partial<ProfileLink>) {
+    setProfile((current) => ({ ...current, links: current.links.map((link, linkIndex) => linkIndex === index ? { ...link, ...patch } : link) }));
+  }
+
+  function addProfileLink() {
+    setProfile((current) => ({ ...current, links: [...current.links, { label: "", url: "", icon: "website" }] }));
+  }
+
+  function removeProfileLink(index: number) {
+    setProfile((current) => ({ ...current, links: current.links.filter((_, linkIndex) => linkIndex !== index) }));
+  }
 
   async function chooseImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -52,7 +66,7 @@ export default function ProfileEditor() {
       const response = await fetch("/api/profiles/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify({ ...profile, links: profile.links.filter((link) => link.label.trim() && link.url.trim()) }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save your profile.");
@@ -83,6 +97,29 @@ export default function ProfileEditor() {
             <input id="profile-name" value={profile.username} maxLength={50} required onChange={(event) => setProfile((current) => ({ ...current, username: event.target.value }))} />
             <label className="field-label" htmlFor="profile-bio">About you<span>{profile.bio.length}/500</span></label>
             <textarea id="profile-bio" rows={5} maxLength={500} value={profile.bio} placeholder="What do you listen for?" onChange={(event) => setProfile((current) => ({ ...current, bio: event.target.value }))} />
+            <div className="profile-links-section">
+              <div className="profile-links-header">
+                <span>Links</span>
+                <button type="button" onClick={addProfileLink}>Add link</button>
+              </div>
+              {profile.links.map((link, index) => (
+                <div key={`${link.label}-${index}`} className="profile-link-row">
+                  <input value={link.label} placeholder="Spotify" onChange={(event) => updateProfileLink(index, { label: event.target.value })} />
+                  <input value={link.url} placeholder="https://example.com" onChange={(event) => updateProfileLink(index, { url: event.target.value })} />
+                  <select value={link.icon} onChange={(event) => updateProfileLink(index, { icon: event.target.value })}>
+                    <option value="website">Website</option>
+                    <option value="spotify">Spotify</option>
+                    <option value="soundcloud">SoundCloud</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="bandcamp">Bandcamp</option>
+                    <option value="apple-music">Apple Music</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="x">X / Twitter</option>
+                  </select>
+                  <button type="button" className="profile-link-remove" onClick={() => removeProfileLink(index)}>Remove</button>
+                </div>
+              ))}
+            </div>
             {message && <p className={message === "Profile saved." ? "profile-message profile-success" : "profile-message"} role="status">{message}</p>}
             <button className="profile-save" type="submit" disabled={busy}><Save size={15} />{busy ? "Saving…" : "Save profile"}</button>
           </form>

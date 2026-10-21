@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureArchiveTables, ensureProfile, getArchiveSql, getCurrentUser, isImageDataUrl } from "@/lib/archive";
+import { ensureArchiveTables, ensureProfile, getArchiveSql, getCurrentUser, isImageDataUrl, normalizeArchiveLinks } from "@/lib/archive";
 
 export const dynamic = "force-dynamic";
 

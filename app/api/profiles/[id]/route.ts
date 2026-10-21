@@ -26,7 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const entries = await sql`SELECT e.id, e.kind, e.title, e.aka, e.artists, e.bio, e.source,
       CASE WHEN e.kind = 'song' THEN NULL ELSE e.media_url END AS "mediaUrl", e.file_name AS "fileName",
       e.file_type AS "fileType", e.tracklist, e.tags, e.genres, e.album_id AS "albumId", a.title AS album,
-      e.release_year AS "releaseYear",
+      e.release_year AS "releaseYear", e.links,
       e.collective_id AS "collectiveId",
       c.title AS collective, e.created_at AS "createdAt"
       FROM archive_entries e LEFT JOIN archive_entries c ON c.id = e.collective_id

@@ -11,6 +11,12 @@
   border-bottom: 1px solid var(--line);
 }
 
+.archive-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .archive-page-heading h1 {
   margin: 0;
   font-size: 19px;

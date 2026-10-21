@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
+import ReadMore from "@/app/pieces/read-more";
 import "./profile-view.css";
 
 type Person = { id: string; username: string; imageUrl: string | null };
@@ -72,7 +73,7 @@ export default function PublicProfile() {
         <div className="public-profile-details">
           <p className="eyebrow">ARCHIVE CONTRIBUTOR</p>
           <h1>{data.profile.username}</h1>
-          {data.profile.bio && <p className="public-bio">{data.profile.bio}</p>}
+          {data.profile.bio && <ReadMore maxLines={4} className="profile-bio-read-more"><p className="public-bio">{data.profile.bio}</p></ReadMore>}
           <div className="social-counts">
             <button onClick={() => setView("followers")}><strong>{data.profile.followers}</strong> followers</button>
             <button onClick={() => setView("following")}><strong>{data.profile.following}</strong> following</button>

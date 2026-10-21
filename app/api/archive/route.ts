@@ -7,6 +7,8 @@ import {
   getCurrentUser,
   isAudioDataUrl,
   isImageDataUrl,
+  normalizeArchiveLinks,
+  withAudioFileSummaries,
 } from "@/lib/archive";
 import { withAudioFileSummaries } from "@/lib/audio-file-summary";
 import { withArchiveImageSummaries } from "@/lib/archive-image-summary";
@@ -22,7 +24,7 @@ export async function GET() {
       e.file_name AS "fileName", e.file_type AS "fileType", e.file_size AS "fileSize",
       e.tracklist, e.tags, e.genres, e.album_id AS "albumId", a.title AS album, e.release_year AS "releaseYear",
       e.collective_id AS "collectiveId", c.title AS collective,
-      e.created_by AS "createdBy", e.created_at AS "createdAt",
+      e.page_views AS "pageViews", e.links, e.created_by AS "createdBy", e.created_at AS "createdAt",
       p.username AS "creatorName", p.image_url AS "creatorImage"
       FROM archive_entries e LEFT JOIN archive_profiles p ON p.user_id = e.created_by
       LEFT JOIN archive_entries c ON c.id = e.collective_id
@@ -78,7 +80,25 @@ export async function POST(request: Request) {
       : [];
     const collectiveId = typeof body.collectiveId === "string" && body.collectiveId ? body.collectiveId : null;
     const albumId = typeof body.albumId === "string" && body.albumId ? body.albumId : null;
-    const releaseYear = Number.isInteger(body.releaseYear) && body.releaseYear >= 1000 && body.releaseYear <= 3000 ? body.releaseYear : null;
+    const parseReleaseYear = (value: unknown) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          const year = Number(trimmed.slice(0, 4));
+          return year >= 1000 && year <= 3000 ? year : null;
+        }
+        const asNumber = Number(trimmed);
+        if (Number.isInteger(asNumber) && asNumber >= 1000 && asNumber <= 3000) {
+          return asNumber;
+        }
+      }
+      if (typeof value === "number" && Number.isInteger(value) && value >= 1000 && value <= 3000) {
+        return value;
+      }
+      return null;
+    };
+    const releaseYear = parseReleaseYear(body.releaseDate ?? body.releaseYear ?? body.songReleaseDate ?? body.songReleaseYear);
     const tags = Array.isArray(body.tags)
       ? body.tags.filter((tag: unknown): tag is string => typeof tag === "string").map((tag: string) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 30)
       : [];
@@ -168,13 +188,13 @@ export async function POST(request: Request) {
     await ensureProfile(user);
     const id = crypto.randomUUID();
     await sql`INSERT INTO archive_entries
-      (id, kind, title, aka, artists, bio, source, media_url, file_url, file_name, file_type, file_size, collective_id, album_id, tags, genres, tracklist, release_year, created_by)
+      (id, kind, title, aka, artists, bio, source, media_url, banner_url, gallery_images, file_url, file_name, file_type, file_size, collective_id, album_id, tags, genres, tracklist, links, release_year, created_by)
       VALUES (${id}, ${kind}, ${title}, ${aka}, ${artists}, ${bio},
       ${null}, ${kind === "song" ? null : ["artist", "album", "collective"].includes(kind) && typeof mediaUrl === "string" ? mediaUrl : null},
       ${null}, ${null}, ${null}, ${null},
       ${["song", "album"].includes(kind) ? collectiveId : null}, ${kind === "song" ? albumId : null},
-      ${kind === "song" ? tags : []}, ${kind === "song" ? genres : []}, ${kind === "album" ? tracklist : []},
-      ${kind === "song" ? songReleaseYear : kind === "album" ? releaseYear : null}, ${user.id})`;
+      ${kind === "song" ? tags : []}, ${["song", "album", "artist"].includes(kind) ? genres : []}, ${kind === "album" ? tracklist : []},
+      ${links}, ${kind === "song" ? songReleaseYear : kind === "album" ? releaseYear : null}, ${user.id})`;
 
     if (kind === "song") {
       const coversToSave = coverImages.length ? coverImages : albumCoverUrl ? [albumCoverUrl] : [];

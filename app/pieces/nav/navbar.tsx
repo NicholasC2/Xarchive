@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, Download, Search } from "lucide-react";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SearchInput from "@/app/pieces/search-input";
 import "./navbar.css";
 import LogoutButton from "@/app/account/LogoutButton";
 import SearchInput from "@/app/pieces/search-input";

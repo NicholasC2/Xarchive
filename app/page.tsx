@@ -4,6 +4,7 @@ import { ArrowRight, Disc3, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ArchiveEntryRow, { ArchiveEntrySummary } from "./pieces/archive-entry-row";
+import SearchInput from "./pieces/search-input";
 import "./page.css";
 
 type HomeArtist = ArchiveEntrySummary & { aka?: string[]; bio?: string; views: number };

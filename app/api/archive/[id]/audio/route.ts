@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const selectedFileId = url.searchParams.get("file");
     await ensureArchiveTables();
     const sql = getArchiveSql();
     const selectedFileId = new URL(request.url).searchParams.get("file");

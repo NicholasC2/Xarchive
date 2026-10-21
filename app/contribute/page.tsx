@@ -1,17 +1,13 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight, ImagePlus, Music2, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Genre } from "@/lib/types";
 import { stripAudioMetadata } from "@/lib/audio-processing";
 import SearchInput from "@/app/pieces/search-input";
 import "./contribution-form.css";
-
-type Mode = "song" | "album" | "artist" | "collective";
-type ArchiveEntry = { id: string; kind: string; title: string; aka: string[]; mediaUrl?: string | null; releaseYear?: number | null };
 
 function fileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -22,9 +18,30 @@ function fileAsDataUrl(file: File) {
   });
 }
 
+function parseReleaseYearFromInput(value: FormDataEntryValue | null | undefined) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const yearFromIso = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+    ? Number(trimmed.slice(0, 4))
+    : null;
+
+  if (yearFromIso !== null && yearFromIso >= 1000 && yearFromIso <= 3000) {
+    return yearFromIso;
+  }
+
+  const asNumber = Number(trimmed);
+  if (Number.isInteger(asNumber) && asNumber >= 1000 && asNumber <= 3000) {
+    return asNumber;
+  }
+
+  return null;
+}
+
 export default function ContributionForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("song");
+  const [mode, setMode] = useState<ContributionMode>("song");
   const [entries, setEntries] = useState<ArchiveEntry[]>([]);
   const [albums, setAlbums] = useState<ArchiveEntry[]>([]);
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
@@ -32,8 +49,17 @@ export default function ContributionForm() {
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [selectedAlbumId, setSelectedAlbumId] = useState("");
+  const [selectedAlbumTitle, setSelectedAlbumTitle] = useState("");
+  const [selectedSongCollectiveId, setSelectedSongCollectiveId] = useState("");
+  const [selectedSongCollectiveTitle, setSelectedSongCollectiveTitle] = useState("");
+  const [selectedAlbumCollectiveId, setSelectedAlbumCollectiveId] = useState("");
+  const [selectedAlbumCollectiveTitle, setSelectedAlbumCollectiveTitle] = useState("");
   const [artistImage, setArtistImage] = useState<File | null>(null);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState("");
+  const [albumTracks, setAlbumTracks] = useState<string[]>([""]);
+  const [albumArtistInput, setAlbumArtistInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -50,15 +76,23 @@ export default function ContributionForm() {
     setImagePreview(file ? URL.createObjectURL(file) : "");
   }
 
-  function changeMode(nextMode: Mode) {
+  function changeMode(nextMode: ContributionMode) {
     setMode(nextMode);
     setAudioFiles([]);
     setCoverImages([]);
     setBannerImage(null);
     setGalleryImages([]);
     setArtistImage(null);
+    setBannerImage(null);
+    setGalleryImages([]);
     setImagePreview("");
     setSelectedAlbumId("");
+    setSelectedAlbumTitle("");
+    setSelectedSongCollectiveId("");
+    setSelectedSongCollectiveTitle("");
+    setSelectedAlbumCollectiveId("");
+    setSelectedAlbumCollectiveTitle("");
+    if (nextMode !== "album") setAlbumTracks([""]);
     setMessage("");
   }
 
@@ -109,10 +143,11 @@ export default function ContributionForm() {
       } else if (mode === "album") {
         if (artistImage && artistImage.size > 2 * 1024 * 1024) throw new Error("Album artwork must be 2 MB or smaller.");
         const imageUrl = artistImage ? await fileAsDataUrl(artistImage) : null;
-        const parsedYear = Number(form.get("releaseYear"));
+        const parsedYear = parseReleaseYearFromInput(form.get("releaseDate") ?? form.get("releaseYear"));
         payload = { kind: "album", title, artists: artistNames, collectiveId, bio, mediaUrl: imageUrl,
-          releaseYear: Number.isInteger(parsedYear) && parsedYear > 0 ? parsedYear : null,
-          tracklist: String(form.get("tracklist") ?? "").split("\n").map((track) => track.trim()).filter(Boolean) };
+          releaseYear: parsedYear,
+          tracklist: albumTracks.map((track) => track.trim()).filter(Boolean),
+          genres: form.getAll("genres").map(String) };
       } else if (mode === "collective") {
         if ([artistImage, bannerImage, ...galleryImages].some((file) => file && file.size > 2 * 1024 * 1024)) throw new Error("Each collective image must be 2 MB or smaller.");
         payload = { kind: "collective", title, artists: artistNames, bio,
@@ -148,6 +183,50 @@ export default function ContributionForm() {
       setBusy(false);
     }
   }
+
+  const renderTab = () => {
+    const sharedProps = {
+      entries,
+      albums,
+      artistImage,
+      bannerImage,
+      galleryImages,
+      imagePreview,
+      selectedAlbumId,
+      selectedAlbumTitle,
+      selectedAlbumCollectiveId,
+      selectedAlbumCollectiveTitle,
+      selectedSongCollectiveId,
+      selectedSongCollectiveTitle,
+      setArtistImage,
+      setBannerImage,
+      setGalleryImages,
+      setImagePreview,
+      setSelectedAlbumId,
+      setSelectedAlbumTitle,
+      setSelectedAlbumCollectiveId,
+      setSelectedAlbumCollectiveTitle,
+      setSelectedSongCollectiveId,
+      setSelectedSongCollectiveTitle,
+      albumArtistInput,
+      setAlbumArtistInput,
+      albumTracks,
+      setAlbumTracks,
+      audioFiles,
+      setAudioFiles,
+    };
+
+    switch (mode) {
+      case "song":
+        return <SongTab {...sharedProps} />;
+      case "album":
+        return <AlbumTab {...sharedProps} />;
+      case "collective":
+        return <CollectiveTab {...sharedProps} />;
+      default:
+        return <ArtistTab {...sharedProps} />;
+    }
+  };
 
   return (
     <main className="contribution-page">

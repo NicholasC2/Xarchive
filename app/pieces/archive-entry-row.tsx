@@ -39,9 +39,34 @@ export type ArchiveEntrySummary = {
   collective?: string | null;
   releaseYear?: number | null;
   tracklist?: string[];
+  tags?: string[];
+  genres?: string[];
   createdBy?: string;
   creatorName?: string | null;
+  links?: ArchiveLink[];
+  audioFiles?: Array<{ id: string; fileName: string; fileType: string; fileSize: number; url: string }>;
 };
+
+const linkIconMap: Record<string, string> = {
+  spotify: "♪",
+  soundcloud: "◌",
+  youtube: "▶",
+  bandcamp: "B",
+  tidal: "T",
+  apple: "A",
+  applemusic: "A",
+  website: "↗",
+  instagram: "◎",
+  x: "X",
+  twitter: "X",
+  discord: "D",
+  lastfm: "L",
+};
+
+function getLinkIcon(icon?: string | null) {
+  const normalized = (icon ?? "website").toLowerCase().replace(/\s+/g, "-");
+  return linkIconMap[normalized] ?? "↗";
+}
 
 function ArtistNames({ names, artistIds }: { names: string[]; artistIds: Record<string, string> }) {
   return <>{names.map((name, index) => {
@@ -107,9 +132,9 @@ export default function ArchiveEntryRow({ entry, showContributor = false }: { en
         {entry.mediaUrl ? <Image src={entry.mediaUrl} alt="" width={48} height={48} unoptimized /> : entry.kind === "collective" ? <UsersRound size={21} /> : entry.kind === "artist" ? <Users size={21} /> : <Disc3 size={22} />}
       </div>
       <div className="archive-entry-content">
-        <div className="archive-entry-title"><span>{entry.kind}</span><h2>{entry.kind === "artist" && artistIds[entry.title.toLowerCase()] ? <Link href={`/artists/${encodeURIComponent(artistIds[entry.title.toLowerCase()])}`}>{entry.title}</Link> : entry.title}</h2></div>
+        <div className="archive-entry-title"><span>{entry.kind}</span><h2>{entry.kind === "artist" && artistIds[entry.title.toLowerCase()] ? <Link className="entry-title-link" href={`/artists/${encodeURIComponent(artistIds[entry.title.toLowerCase()])}`}>{entry.title}</Link> : entry.kind === "album" ? <Link className="entry-title-link" href={`/albums/${encodeURIComponent(entry.id)}`}>{entry.title}</Link> : entry.title}</h2></div>
         {(entry.kind === "song" || entry.kind === "album") && <p><ArtistNames names={artists} artistIds={artistIds} />{entry.releaseYear ? ` · ${entry.releaseYear}` : ""}</p>}
-        {entry.kind === "artist" && aka.length > 0 && <p>AKA: {aka.join(", ")}</p>}
+        {entry.kind === "artist" && aka.length > 0 && <p className="aka-row"><span>AKA:</span> <ReadMore maxLines={2} className="meta-read-more">{aka.join(", ")}</ReadMore></p>}
         {entry.kind === "collective" && <p>Artists: <ArtistNames names={artists} artistIds={artistIds} /></p>}
         {entry.collective && <p>Collective: {entry.collective}</p>}
         {tracklist.length > 0 && <p className="archive-entry-tracklist">{entry.kind === "album" ? `${tracklist.length} tracks · ` : ""}{tracklist.join(" · ")}</p>}
