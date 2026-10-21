@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import ArchiveEntryRow from "@/app/pieces/archive-entry-row";
 import ReadMore from "@/app/pieces/read-more";
 import "./profile-view.css";
 
@@ -73,7 +72,7 @@ export default function PublicProfile() {
         <div className="public-profile-details">
           <p className="eyebrow">ARCHIVE CONTRIBUTOR</p>
           <h1>{data.profile.username}</h1>
-          {data.profile.bio && <ReadMore maxLines={4} className="profile-bio-read-more"><p className="public-bio">{data.profile.bio}</p></ReadMore>}
+          {data.profile.bio && <ReadMore maxLines={4}><p className="public-bio">{data.profile.bio}</p></ReadMore>}
           <div className="social-counts">
             <button onClick={() => setView("followers")}><strong>{data.profile.followers}</strong> followers</button>
             <button onClick={() => setView("following")}><strong>{data.profile.following}</strong> following</button>
@@ -88,14 +87,6 @@ export default function PublicProfile() {
         <button className={view === "followers" ? "active" : ""} onClick={() => setView("followers")}>Followers <span>{data.profile.followers}</span></button>
         <button className={view === "following" ? "active" : ""} onClick={() => setView("following")}>Following <span>{data.profile.following}</span></button>
       </div>
-
-      {view === "entries" ? (
-        data.entries.length ? <div className="profile-entry-list">{data.entries.map((entry) => <ArchiveEntryRow key={entry.id} entry={{ ...entry, artistIds }} />)}</div> : <div className="profile-empty"><Disc3 size={22} /><p>No contributions yet.</p></div>
-      ) : people.length ? (
-        <div className="people-list">{people.map((person) => <Link className="person-row" key={person.id} href={`/profile/${encodeURIComponent(person.id)}`}><span className="person-avatar">{person.imageUrl ? <Image src={person.imageUrl} alt="" width={38} height={38} unoptimized /> : person.username.slice(0, 1).toUpperCase()}</span><strong>{person.username}</strong><ArrowUpRight size={15} /></Link>)}</div>
-      ) : (
-        <div className="profile-empty"><Users size={22} /><p>{view === "followers" ? "No followers yet." : "Not following anyone yet."}</p></div>
-      )}
     </main>
   );
 }

@@ -1,5 +1,17 @@
 export interface Image {
     url: string;
+    bio: string;
+}
+
+export interface Profile {
+    username: string; //unique
+    bio: string; 
+
+    profilePhoto?: Image; 
+    bannerPhoto?: Image; 
+    
+    followers: string[];
+    following: string[];
 }
 
 export interface AudioFile {
@@ -11,7 +23,7 @@ export interface AudioFile {
     bitrateKbps?: number;
     bitDepth?: number;
     bio?: string;
-    source?: "soundcloud" | "spotify" | "youtube" | "social media" | "unknown";
+    source?: AudioSource;
 }
 
 export interface Artist {
@@ -20,31 +32,44 @@ export interface Artist {
     bio: string;
     aka?: string;
 
-    profilePhoto?: Image | undefined;
+    profilePhoto?: Image;
+    bannerPhoto?: Image; 
 }
 
-export enum Genre {
-    Pop = "pop",
-    Rock = "rock",
-    HipHop = "hip-hop",
-    RnB = "rnb",
-    Electronic = "electronic",
-    Dance = "dance",
-    Jazz = "jazz",
-    Blues = "blues",
-    Classical = "classical",
-    Country = "country",
-    Folk = "folk",
-    Metal = "metal",
-    Punk = "punk",
-    Reggae = "reggae",
-    Latin = "latin",
-    World = "world",
-    Religious = "religious",
-    Soundtrack = "soundtrack",
-    Experimental = "experimental",
-    Other = "other",
-}
+export const sources = [
+    "soundcloud",
+    "spotify",
+    "youtube",
+    "social media",
+    "unknown"
+]
+
+export type AudioSource = (typeof sources)[number];
+
+export const genres = [
+    "pop",
+    "rock",
+    "hip-hop",
+    "rnb",
+    "electronic",
+    "dance",
+    "jazz",
+    "blues",
+    "classical",
+    "country",
+    "folk",
+    "metal",
+    "punk",
+    "reggae",
+    "latin",
+    "world",
+    "religious",
+    "soundtrack",
+    "experimental",
+    "other",
+] as const;
+
+export type Genre = (typeof genres)[number];
 
 export interface Album {
     id: string;
@@ -59,6 +84,8 @@ export interface Album {
     releaseDate: Date | undefined; // undefined for unreleased
     songs: Song[];
     releaseYear?: number;
+
+    coverPhotos?: Image[];
 }
 
 export interface Collective {
@@ -66,6 +93,9 @@ export interface Collective {
     name: string;
     artists: Artist[];
     bio?: string;
+
+    profilePhoto?: Image;
+    bannerPhoto?: Image; 
 }
 
 export interface Song {
@@ -81,4 +111,5 @@ export interface Song {
 
     releaseDate: Date | undefined; // undefined for unreleased
     audioFiles: AudioFile[];
+    coverPhotos?: Image[];
 }

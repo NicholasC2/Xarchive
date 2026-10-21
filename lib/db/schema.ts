@@ -1,266 +1,186 @@
-
 import {
   pgTable,
+  pgEnum,
+  uuid,
   text,
   integer,
   bigint,
   doublePrecision,
   date,
-  jsonb,
-  pgEnum,
   primaryKey,
-  index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 
-export const genreEnum = pgEnum("genre", [
-  "pop",
-  "rock",
-  "hip-hop",
-  "rnb",
-  "electronic",
-  "dance",
-  "jazz",
-  "blues",
-  "classical",
-  "country",
-  "folk",
-  "metal",
-  "punk",
-  "reggae",
-  "latin",
-  "world",
-  "religious",
-  "soundtrack",
-  "experimental",
-  "other",
-]);
+import { sources, genres } from "../types";
 
-export const audioSourceEnum = pgEnum("audio_source", [
-  "soundcloud",
-  "spotify",
-  "youtube",
-  "social media",
-  "unknown",
-]);
+export const audioSourceEnum = pgEnum("audio_source", sources as [string, ...string[]]);
+export const genreEnum = pgEnum("genre", genres);
+
+export const images = pgTable("images", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  url: text("url").notNull(),
+});
+
+export const profiles = pgTable("profiles", {
+  username: text("username").primaryKey(),
+  bio: text("bio").notNull(),
+  profilePhotoId: uuid("profile_photo_id").references(() => images.id),
+  bannerPhotoId: uuid("banner_photo_id").references(() => images.id),
+});
+
+export const profileFollows = pgTable(
+  "profile_follows",
+  {
+    follower: text("follower")
+      .notNull()
+      .references(() => profiles.username, { onDelete: "cascade" }),
+    following: text("following")
+      .notNull()
+      .references(() => profiles.username, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.follower, t.following] })],
+);
 
 export const artists = pgTable("artists", {
-  id: text("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  bio: text("bio").notNull().default(""),
-  aka: text("aka").notNull().default(""),
-  profilePhoto: jsonb("profile_photo")
-    .$type<{ url: string }>(),
+  bio: text("bio").notNull(),
+  aka: text("aka"),
+  profilePhotoId: uuid("profile_photo_id").references(() => images.id),
+  bannerPhotoId: uuid("banner_photo_id").references(() => images.id),
 });
 
 export const collectives = pgTable("collectives", {
-  id: text("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   bio: text("bio"),
+  profilePhotoId: uuid("profile_photo_id").references(() => images.id),
+  bannerPhotoId: uuid("banner_photo_id").references(() => images.id),
 });
 
 export const collectiveArtists = pgTable(
   "collective_artists",
   {
-    collectiveId: text("collective_id")
+    collectiveId: uuid("collective_id")
       .notNull()
       .references(() => collectives.id, { onDelete: "cascade" }),
-    artistId: text("artist_id")
+    artistId: uuid("artist_id")
       .notNull()
       .references(() => artists.id, { onDelete: "cascade" }),
   },
-  (table) => [
-    primaryKey({ columns: [table.collectiveId, table.artistId] }),
-  ],
+  (t) => [primaryKey({ columns: [t.collectiveId, t.artistId] })],
 );
 
 export const albums = pgTable("albums", {
-  id: text("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  bio: text("bio").notNull().default(""),
+  bio: text("bio").notNull(),
   tags: text("tags").array().notNull().default([]),
   genre: genreEnum("genre").array().notNull().default([]),
-  releaseDate: date("release_date"),
+  collectiveId: uuid("collective_id").references(() => collectives.id),
+  releaseDate: date("release_date", { mode: "date" }),
   releaseYear: integer("release_year"),
-  collectiveId: text("collective_id")
-    .references(() => collectives.id, { onDelete: "set null" }),
 });
 
 export const albumArtists = pgTable(
   "album_artists",
   {
-    albumId: text("album_id")
+    albumId: uuid("album_id")
       .notNull()
       .references(() => albums.id, { onDelete: "cascade" }),
-    artistId: text("artist_id")
+    artistId: uuid("artist_id")
       .notNull()
       .references(() => artists.id, { onDelete: "cascade" }),
   },
-  (table) => [
-    primaryKey({ columns: [table.albumId, table.artistId] }),
-  ],
+  (t) => [primaryKey({ columns: [t.albumId, t.artistId] })],
 );
 
-export const songs = pgTable(
-  "songs",
+export const albumCoverPhotos = pgTable(
+  "album_cover_photos",
   {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    bio: text("bio").notNull().default(""),
-    tags: text("tags").array().notNull().default([]),
-    genre: genreEnum("genre").array().notNull().default([]),
-    releaseDate: date("release_date"),
-    albumId: text("album_id")
-      .references(() => albums.id, { onDelete: "set null" }),
-    collectiveId: text("collective_id")
-      .references(() => collectives.id, { onDelete: "set null" }),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "cascade" }),
+    imageId: uuid("image_id")
+      .notNull()
+      .references(() => images.id, { onDelete: "cascade" }),
   },
-  (table) => [
-    index("songs_album_id_idx").on(table.albumId),
-  ],
+  (t) => [primaryKey({ columns: [t.albumId, t.imageId] })],
 );
+
+export const songs = pgTable("songs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  bio: text("bio").notNull(),
+  tags: text("tags").array().notNull().default([]),
+  genre: genreEnum("genre").array().notNull().default([]),
+  collectiveId: uuid("collective_id").references(() => collectives.id),
+  releaseDate: date("release_date", { mode: "date" }),
+});
 
 export const songArtists = pgTable(
   "song_artists",
   {
-    songId: text("song_id")
+    songId: uuid("song_id")
       .notNull()
       .references(() => songs.id, { onDelete: "cascade" }),
-    artistId: text("artist_id")
+    artistId: uuid("artist_id")
       .notNull()
       .references(() => artists.id, { onDelete: "cascade" }),
-    role: text("role", {
-      enum: ["main", "featured"],
-    }).notNull(),
   },
-  (table) => [
-    primaryKey({
-      columns: [table.songId, table.artistId, table.role],
-    }),
-    index("song_artists_artist_id_idx").on(table.artistId),
-  ],
+  (t) => [primaryKey({ columns: [t.songId, t.artistId] })],
 );
 
-export const audioFiles = pgTable(
-  "audio_files",
+export const songFeaturedArtists = pgTable(
+  "song_featured_artists",
   {
-    id: text("id").primaryKey(),
-    songId: text("song_id")
+    songId: uuid("song_id")
       .notNull()
       .references(() => songs.id, { onDelete: "cascade" }),
-    url: text("url").notNull(),
-    format: text("format").notNull(),
-    sampleRateHz: integer("sample_rate_hz").notNull(),
-    duration: doublePrecision("duration").notNull(),
-    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
-    bitrateKbps: integer("bitrate_kbps"),
-    bitDepth: integer("bit_depth"),
-    bio: text("bio"),
-    source: audioSourceEnum("source"),
-    position: integer("position").notNull().default(0),
+    artistId: uuid("artist_id")
+      .notNull()
+      .references(() => artists.id, { onDelete: "cascade" }),
   },
-  (table) => [
-    index("audio_files_song_id_idx").on(table.songId),
-  ],
+  (t) => [primaryKey({ columns: [t.songId, t.artistId] })],
 );
 
-export const artistsRelations = relations(artists, ({ many }) => ({
-  albumArtists: many(albumArtists),
-  songArtists: many(songArtists),
-  collectiveArtists: many(collectiveArtists),
-}));
-
-export const collectivesRelations = relations(
-  collectives,
-  ({ many }) => ({
-    artists: many(collectiveArtists),
-    albums: many(albums),
-    songs: many(songs),
-  }),
+export const songAlbums = pgTable(
+  "song_albums",
+  {
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id, { onDelete: "cascade" }),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.songId, t.albumId] })],
 );
 
-export const albumsRelations = relations(albums, ({ one, many }) => ({
-  collective: one(collectives, {
-    fields: [albums.collectiveId],
-    references: [collectives.id],
-  }),
-  mainArtist: many(albumArtists),
-  songs: many(songs),
-}));
-
-export const songsRelations = relations(songs, ({ one, many }) => ({
-  album: one(albums, {
-    fields: [songs.albumId],
-    references: [albums.id],
-  }),
-  collective: one(collectives, {
-    fields: [songs.collectiveId],
-    references: [collectives.id],
-  }),
-  artists: many(songArtists),
-  audioFiles: many(audioFiles),
-}));
-
-export const audioFilesRelations = relations(audioFiles, ({ one }) => ({
-  song: one(songs, {
-    fields: [audioFiles.songId],
-    references: [songs.id],
-  }),
-}));
-
-export const albumArtistsRelations = relations(
-  albumArtists,
-  ({ one }) => ({
-    album: one(albums, {
-      fields: [albumArtists.albumId],
-      references: [albums.id],
-    }),
-    artist: one(artists, {
-      fields: [albumArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
+export const songCoverPhotos = pgTable(
+  "song_cover_photos",
+  {
+    songId: uuid("song_id")
+      .notNull()
+      .references(() => songs.id, { onDelete: "cascade" }),
+    imageId: uuid("image_id")
+      .notNull()
+      .references(() => images.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.songId, t.imageId] })],
 );
 
-export const songArtistsRelations = relations(
-  songArtists,
-  ({ one }) => ({
-    song: one(songs, {
-      fields: [songArtists.songId],
-      references: [songs.id],
-    }),
-    artist: one(artists, {
-      fields: [songArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export const collectiveArtistsRelations = relations(
-  collectiveArtists,
-  ({ one }) => ({
-    collective: one(collectives, {
-      fields: [collectiveArtists.collectiveId],
-      references: [collectives.id],
-    }),
-    artist: one(artists, {
-      fields: [collectiveArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export type ArtistRow = typeof artists.$inferSelect;
-export type NewArtist = typeof artists.$inferInsert;
-
-export type AlbumRow = typeof albums.$inferSelect;
-export type NewAlbum = typeof albums.$inferInsert;
-
-export type SongRow = typeof songs.$inferSelect;
-export type NewSong = typeof songs.$inferInsert;
-
-export type CollectiveRow = typeof collectives.$inferSelect;
-export type NewCollective = typeof collectives.$inferInsert;
-
-export type AudioFileRow = typeof audioFiles.$inferSelect;
-export type NewAudioFile = typeof audioFiles.$inferInsert;
+export const audioFiles = pgTable("audio_files", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  songId: uuid("song_id")
+    .notNull()
+    .references(() => songs.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  format: text("format").notNull(),
+  sampleRateHz: integer("sample_rate_hz").notNull(),
+  duration: doublePrecision("duration").notNull(),
+  sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+  bitrateKbps: integer("bitrate_kbps"),
+  bitDepth: integer("bit_depth"),
+  bio: text("bio"),
+  source: audioSourceEnum("source"),
+});

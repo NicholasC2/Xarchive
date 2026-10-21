@@ -1,26 +1,15 @@
+import { auth } from "@/lib/auth/server";
+import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { ensureArchiveTables, ensureProfile, getArchiveSql, getCurrentUser } from "@/lib/archive";
-import { withAudioFileSummaries, AudioFileRow } from "@/lib/audio-file-summary";
-import { withArchiveImageSummaries, ArchiveImageRow } from "@/lib/archive-image-summary";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const viewer = await getCurrentUser();
-    await ensureArchiveTables();
-    const sql = getArchiveSql();
-    if (viewer?.id === id) await ensureProfile(viewer);
+    const viewer = (await auth.getSession()).data?.user;
 
-    const profileRows = await sql`SELECT p.user_id AS id, p.username, p.bio,
-      p.image_url AS "imageUrl", p.banner_url AS "bannerUrl", p.gallery_urls AS "galleryUrls",
-      (SELECT COUNT(*) FROM archive_follows WHERE following_id = p.user_id) AS followers,
-      (SELECT COUNT(*) FROM archive_follows WHERE follower_id = p.user_id) AS following,
-      EXISTS (SELECT 1 FROM archive_follows WHERE follower_id = ${viewer?.id ?? ""}
-        AND following_id = p.user_id) AS "isFollowing"
-      FROM archive_profiles p WHERE p.user_id = ${id}`;
-    const [profile] = profileRows as unknown as { id: string; username: string; bio: string; imageUrl: string | null; bannerUrl: string | null; galleryUrls: string[]; followers: number; following: number; isFollowing: boolean }[];
+    const profile = await db.query.
     if (!profile) return NextResponse.json({ error: "Profile not found." }, { status: 404 });
 
     const entries = await sql`SELECT e.id, e.kind, e.title, e.aka, e.artists, e.bio, e.source,

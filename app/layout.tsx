@@ -1,5 +1,7 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import Navbar from "./pieces/nav/navbar";
 import Footer from "./pieces/footer";
@@ -25,7 +27,11 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({
   children,
 }: LayoutProps<"/">) {
-  const session = await auth.getSession();
+  const session = await auth.getSession({
+    fetchOptions: {
+      headers: await headers(),
+    },
+  });
 
   return (
     <html

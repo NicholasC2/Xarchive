@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowUpRight, Download, Search } from "lucide-react";
+import { ArrowUpRight, LogOut, Search } from "lucide-react";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SearchInput from "@/app/pieces/search-input";
 import "./navbar.css";
-import LogoutButton from "@/app/account/LogoutButton";
+import { authClient } from "@/lib/auth/client";
 
 type NavbarUser = { id: string; name?: string | null; email?: string | null };
 
