@@ -1,35 +1,33 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Genre } from "@/lib/types";
-import { stripAudioMetadata } from "@/lib/audio-processing";
-import SearchInput from "@/app/pieces/search-input";
-import "./contribution-form.css";
+import { ArrowUpRight } from "lucide-react";
+import "../pieces/form.css"
+import SongTab from "./song-tab";
+import AlbumTab from "./album-tab";
+import ArtistTab from "./artist-tab";
+import CollectiveTab from "./collective-tab";
+import { useState } from "react";
 
 export default function ContributionForm() {
-  const [mode, setMode] = useState("")
   const [busy, setBusy] = useState(false)
+  const [page, setPage] = useState("song");
 
   return (
     <main className="archive-page">
-      <div className="contribution-layout">
-        <section className="contribution-panel">
-          <div className="contribution-tabs" role="tablist" aria-label="Entry type">
-            {(["song", "album", "artist", "collective"] as const).map((entryMode) => <button key={entryMode} type="button" role="tab" aria-selected={mode === entryMode} className={mode === entryMode ? "selected" : ""} onClick={() => changeMode(entryMode)}>{entryMode === "collective" ? "Collective" : entryMode[0].toUpperCase() + entryMode.slice(1)}</button>)}
-          </div>
-          <form className="contribution-form">
-            <div className="form-heading"><div><span>NEW {mode.toUpperCase()} ENTRY</span><h2>{mode === "song" ? "Add a song" : mode === "album" ? "Add an album" : mode === "collective" ? "Add a collective" : "Add an artist"}</h2></div><span className="form-step">01 / 01</span></div>
-            <label className="field-label" htmlFor="entry-title">{mode === "song" ? "Song title" : mode === "album" ? "Album title" : mode === "collective" ? "Collective name" : "Artist name"}<span>Required</span></label>
-            <input id="entry-title" name="title" required maxLength={160} placeholder={mode === "song" ? "What is the track called?" : mode === "album" ? "What is the album called?" : mode === "collective" ? "Name this group" : "Who are we listening to?"} />
+      <section className="panel">
+        <div className="flex flex-row w-full gap-1" role="tablist" aria-label="Entry type">
+          {(["song", "album", "artist", "collective"] as const).map((entryMode) => <button key={entryMode} type="button" role="tab" aria-selected={page === entryMode} className={"w-full" + (page === entryMode ? " selected" : "")} onClick={() => setPage(entryMode)}>{entryMode === "collective" ? "Collective" : entryMode[0].toUpperCase() + entryMode.slice(1)}</button>)}
+        </div>
+        <form className="contribution-form">
+          { page === "song" && <SongTab /> }
+          { page === "album" && <AlbumTab /> }
+          { page === "artist" && <ArtistTab /> }
+          { page === "collective" && <CollectiveTab /> }
 
-            <button className="submit-entry" type="submit" disabled={busy}>{busy ? "Saving entry…" : `Add ${mode}`} <ArrowUpRight size={16} /></button>
-            <p className="contribution-footnote">By contributing, you confirm this entry is okay to share with the archive.</p>
-          </form>
-        </section>
-      </div>
+          <button type="submit" className="w-full" disabled={busy}>{busy ? "Saving entry…" : `Add ${page}`} <ArrowUpRight size={16} /></button>
+          <small>By contributing, you confirm this entry is okay to share with the archive.</small>
+        </form>
+      </section>
     </main>
   );
 }

@@ -33,17 +33,15 @@ export default function Login() {
     }
 
     return (
-        <main className="auth-page">
-            <form className="auth-form" onSubmit={handleSubmit}>
-                <h2>Log in</h2>
-                <label htmlFor="login-email">Email</label>
-                <input id="login-email" name="email" type="email" autoComplete="email" required />
-                <label htmlFor="login-password">Password</label>
-                <input id="login-password" name="password" type="password" autoComplete="current-password" required />
-                {error && <p className="auth-error" role="alert">{error}</p>}
-                <button type="submit" disabled={busy}>{busy ? "Signing in…" : "Log in"}</button>
-                <p className="auth-switch">New here? <Link href="/sign-up">Create an account</Link></p>
-            </form>
-        </main>
+        <form className="auth-form" onSubmit={handleSubmit}>
+            <h2>Log in</h2>
+            <label htmlFor="login-email">Email</label>
+            <input id="login-email" name="email" type="email" autoComplete="email" required />
+            <label htmlFor="login-password">Password</label>
+            <input id="login-password" name="password" type="password" autoComplete="current-password" required />
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button type="submit" disabled={busy}>{busy ? "Signing in…" : "Log in"}</button>
+            <p className="auth-switch">New here? <Link href="/sign-up">Create an account</Link></p>
+        </form>
     );
 }
