@@ -1,14 +1,14 @@
 import Link from "next/link";
-import "./not-found.css";
+import "./pieces/error.css";
 
 export default function NotFound() {
   return (
-    <main className="not-found-page">
-      <div>
-        <span>404</span>
+    <main className="error-page">
+      <div className="message">
+        <h1 className="code">404</h1>
         <h1>Not found</h1>
-        <Link href="/">Home</Link>
       </div>
+      <Link href="/">Return Home</Link>
     </main>
   );
 }

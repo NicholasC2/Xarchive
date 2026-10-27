@@ -1,0 +1,40 @@
+.error-page {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.error-page > .message {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.error-page > .message > .code {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+  border-right: 1px solid var(--foreground-1);
+
+  padding-right: 11px;
+}
+
+.error-page h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.error-page a {
+  color: var(--foreground-3);
+  font-size: 12px;
+}
+
+.error-page a:hover {
+  color: var(--foreground-1);
+}

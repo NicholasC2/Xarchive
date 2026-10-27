@@ -10,10 +10,16 @@ import {
   date,
   primaryKey,
   index,
+  check,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
-// ─── Enums ───────────────────────────────────────────────
+// ─── Enums ──────────────────────────────────────────────
+
+export const personTypes = ["artist", "profile"] as const;
+export type PersonType = (typeof personTypes)[number];
+
+export const personTypeEnum = pgEnum("person_type", personTypes);
 
 export const sources = [
   "soundcloud",
@@ -24,7 +30,6 @@ export const sources = [
 ] as const;
 
 export type AudioSource = (typeof sources)[number];
-
 export const audioSourceEnum = pgEnum("audio_source", sources);
 
 export const genres = [
@@ -51,111 +56,26 @@ export const genres = [
 ] as const;
 
 export type Genre = (typeof genres)[number];
-
 export const genreEnum = pgEnum("genre", genres);
 
-// ─── Profiles ────────────────────────────────────────────
+// ─── People ─────────────────────────────────────────────
 
-export const profiles = pgTable("profiles", {
+export const people = pgTable("people", {
   username: text("username").primaryKey(),
-  bio: text("bio").notNull().default(""),
 
-  // Any URL: local storage, CDN, or external website.
-  profilePhotoUrl: text("profile_photo_url"),
-  bannerPhotoUrl: text("banner_photo_url"),
+  type: personTypeEnum("type").notNull().default("profile"),
 
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  }).notNull().defaultNow(),
-});
-
-export const profileFollows = pgTable(
-  "profile_follows",
-  {
-    followerUsername: text("follower_username")
-      .notNull()
-      .references(() => profiles.username, {
-        onDelete: "cascade",
-      }),
-
-    followingUsername: text("following_username")
-      .notNull()
-      .references(() => profiles.username, {
-        onDelete: "cascade",
-      }),
-
-    createdAt: timestamp("created_at", {
-      withTimezone: true,
-    }).notNull().defaultNow(),
-  },
-  (table) => [
-    primaryKey({
-      columns: [
-        table.followerUsername,
-        table.followingUsername,
-      ],
-    }),
-    index("profile_follows_following_idx").on(
-      table.followingUsername,
-    ),
-  ],
-);
-
-// ─── Artists ─────────────────────────────────────────────
-
-export const artists = pgTable("artists", {
-  id: text("id").primaryKey(),
   name: text("name").notNull(),
   bio: text("bio").notNull().default(""),
-  aka: text("aka"),
-
-  profilePhotoUrl: text("profile_photo_url"),
-  bannerPhotoUrl: text("banner_photo_url"),
+  profileImageUrl: text("profile_image_url"),
+  bannerImageUrl: text("banner_image_url"),
 
   createdAt: timestamp("created_at", {
     withTimezone: true,
   }).notNull().defaultNow(),
 });
 
-// ─── Collectives ─────────────────────────────────────────
-
-export const collectives = pgTable("collectives", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  bio: text("bio").notNull().default(""),
-
-  profilePhotoUrl: text("profile_photo_url"),
-  bannerPhotoUrl: text("banner_photo_url"),
-
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  }).notNull().defaultNow(),
-});
-
-export const collectiveArtists = pgTable(
-  "collective_artists",
-  {
-    collectiveId: text("collective_id")
-      .notNull()
-      .references(() => collectives.id, {
-        onDelete: "cascade",
-      }),
-
-    artistId: text("artist_id")
-      .notNull()
-      .references(() => artists.id, {
-        onDelete: "cascade",
-      }),
-  },
-  (table) => [
-    primaryKey({
-      columns: [table.collectiveId, table.artistId],
-    }),
-    index("collective_artists_artist_idx").on(table.artistId),
-  ],
-);
-
-// ─── Albums ──────────────────────────────────────────────
+// ─── Albums ─────────────────────────────────────────────
 
 export const albums = pgTable("albums", {
   id: text("id").primaryKey(),
@@ -163,18 +83,9 @@ export const albums = pgTable("albums", {
   bio: text("bio").notNull().default(""),
 
   tags: text("tags").array().notNull().default([]),
-  genre: genreEnum("genre").array().notNull().default([]),
+  genres: genreEnum("genres").array().notNull().default([]),
 
-  // Optional association with a collective.
-  collectiveId: text("collective_id").references(
-    () => collectives.id,
-    { onDelete: "set null" },
-  ),
-
-  // A single primary cover URL, from any source.
   coverImageUrl: text("cover_image_url"),
-
-  // Allows a known year even if the exact date is unknown.
   releaseDate: date("release_date", { mode: "date" }),
   releaseYear: integer("release_year"),
 
@@ -189,25 +100,39 @@ export const albumArtists = pgTable(
   {
     albumId: text("album_id")
       .notNull()
-      .references(() => albums.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => albums.id, { onDelete: "cascade" }),
 
-    artistId: text("artist_id")
+    artistUsername: text("artist_username")
       .notNull()
-      .references(() => artists.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => people.username, { onDelete: "cascade" }),
   },
   (table) => [
-    primaryKey({
-      columns: [table.albumId, table.artistId],
-    }),
-    index("album_artists_artist_idx").on(table.artistId),
+    primaryKey({ columns: [table.albumId, table.artistUsername] }),
+    index("album_artists_artist_idx").on(table.artistUsername),
   ],
 );
 
-// ─── Songs ───────────────────────────────────────────────
+// Featured album artists.
+export const albumFeaturedArtists = pgTable(
+  "album_featured_artists",
+  {
+    albumId: text("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "cascade" }),
+
+    artistUsername: text("artist_username")
+      .notNull()
+      .references(() => people.username, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.albumId, table.artistUsername] }),
+    index("album_featured_artists_artist_idx").on(
+      table.artistUsername,
+    ),
+  ],
+);
+
+// ─── Songs ──────────────────────────────────────────────
 
 export const songs = pgTable("songs", {
   id: text("id").primaryKey(),
@@ -215,16 +140,9 @@ export const songs = pgTable("songs", {
   bio: text("bio").notNull().default(""),
 
   tags: text("tags").array().notNull().default([]),
-  genre: genreEnum("genre").array().notNull().default([]),
+  genres: genreEnum("genres").array().notNull().default([]),
 
-  collectiveId: text("collective_id").references(
-    () => collectives.id,
-    { onDelete: "set null" },
-  ),
-
-  // A single primary cover URL, from any source.
   coverImageUrl: text("cover_image_url"),
-
   releaseDate: date("release_date", { mode: "date" }),
 
   createdAt: timestamp("created_at", {
@@ -238,80 +156,59 @@ export const songArtists = pgTable(
   {
     songId: text("song_id")
       .notNull()
-      .references(() => songs.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => songs.id, { onDelete: "cascade" }),
 
-    artistId: text("artist_id")
+    artistUsername: text("artist_username")
       .notNull()
-      .references(() => artists.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => people.username, { onDelete: "cascade" }),
   },
   (table) => [
-    primaryKey({
-      columns: [table.songId, table.artistId],
-    }),
-    index("song_artists_artist_idx").on(table.artistId),
+    primaryKey({ columns: [table.songId, table.artistUsername] }),
+    index("song_artists_artist_idx").on(table.artistUsername),
   ],
 );
 
-// Featured artists are separate from main artists.
+// Featured song artists.
 export const songFeaturedArtists = pgTable(
   "song_featured_artists",
   {
     songId: text("song_id")
       .notNull()
-      .references(() => songs.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => songs.id, { onDelete: "cascade" }),
 
-    artistId: text("artist_id")
+    artistUsername: text("artist_username")
       .notNull()
-      .references(() => artists.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => people.username, { onDelete: "cascade" }),
   },
   (table) => [
-    primaryKey({
-      columns: [table.songId, table.artistId],
-    }),
+    primaryKey({ columns: [table.songId, table.artistUsername] }),
     index("song_featured_artists_artist_idx").on(
-      table.artistId,
+      table.artistUsername,
     ),
   ],
 );
 
-// ─── Album Tracks ────────────────────────────────────────
-
-// A song can appear on multiple albums.
-// trackNumber belongs to the song's placement on an album.
+// Song placements on albums.
 export const albumSongs = pgTable(
   "album_songs",
   {
     albumId: text("album_id")
       .notNull()
-      .references(() => albums.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => albums.id, { onDelete: "cascade" }),
 
     songId: text("song_id")
       .notNull()
-      .references(() => songs.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => songs.id, { onDelete: "cascade" }),
 
     trackNumber: integer("track_number"),
   },
   (table) => [
-    primaryKey({
-      columns: [table.albumId, table.songId],
-    }),
+    primaryKey({ columns: [table.albumId, table.songId] }),
     index("album_songs_song_idx").on(table.songId),
   ],
 );
 
-// ─── Audio Files ─────────────────────────────────────────
+// ─── Audio Files ────────────────────────────────────────
 
 export const audioFiles = pgTable(
   "audio_files",
@@ -320,196 +217,34 @@ export const audioFiles = pgTable(
 
     songId: text("song_id")
       .notNull()
-      .references(() => songs.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => songs.id, { onDelete: "cascade" }),
 
-    // Audio URL can be local, CDN-hosted, or external.
+    // Local storage, CDN, or external URL.
     url: text("url").notNull(),
     format: text("format").notNull(),
 
-    sampleRateHz: integer("sample_rate_hz").notNull(),
     duration: doublePrecision("duration").notNull(),
-    sizeBytes: bigint("size_bytes", {
-      mode: "number",
-    }).notNull(),
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
 
+    sampleRateHz: integer("sample_rate_hz"),
     bitrateKbps: integer("bitrate_kbps"),
     bitDepth: integer("bit_depth"),
-    bio: text("bio"),
 
     source: audioSourceEnum("source"),
+
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    }).notNull().defaultNow(),
   },
   (table) => [
     index("audio_files_song_idx").on(table.songId),
   ],
 );
 
-// ─── Relations ───────────────────────────────────────────
+// ─── Inferred Types ─────────────────────────────────────
 
-export const profilesRelations = relations(
-  profiles,
-  ({ many }) => ({
-    following: many(profileFollows, {
-      relationName: "follower",
-    }),
-    followers: many(profileFollows, {
-      relationName: "followed",
-    }),
-  }),
-);
-
-export const profileFollowsRelations = relations(
-  profileFollows,
-  ({ one }) => ({
-    follower: one(profiles, {
-      fields: [profileFollows.followerUsername],
-      references: [profiles.username],
-      relationName: "follower",
-    }),
-    followed: one(profiles, {
-      fields: [profileFollows.followingUsername],
-      references: [profiles.username],
-      relationName: "followed",
-    }),
-  }),
-);
-
-export const artistsRelations = relations(
-  artists,
-  ({ many }) => ({
-    collectives: many(collectiveArtists),
-    albums: many(albumArtists),
-    songs: many(songArtists),
-    featuredSongs: many(songFeaturedArtists),
-  }),
-);
-
-export const collectivesRelations = relations(
-  collectives,
-  ({ many }) => ({
-    artists: many(collectiveArtists),
-    albums: many(albums),
-    songs: many(songs),
-  }),
-);
-
-export const collectiveArtistsRelations = relations(
-  collectiveArtists,
-  ({ one }) => ({
-    collective: one(collectives, {
-      fields: [collectiveArtists.collectiveId],
-      references: [collectives.id],
-    }),
-    artist: one(artists, {
-      fields: [collectiveArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export const albumsRelations = relations(
-  albums,
-  ({ one, many }) => ({
-    collective: one(collectives, {
-      fields: [albums.collectiveId],
-      references: [collectives.id],
-    }),
-    mainArtists: many(albumArtists),
-    songs: many(albumSongs),
-  }),
-);
-
-export const albumArtistsRelations = relations(
-  albumArtists,
-  ({ one }) => ({
-    album: one(albums, {
-      fields: [albumArtists.albumId],
-      references: [albums.id],
-    }),
-    artist: one(artists, {
-      fields: [albumArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export const songsRelations = relations(
-  songs,
-  ({ one, many }) => ({
-    collective: one(collectives, {
-      fields: [songs.collectiveId],
-      references: [collectives.id],
-    }),
-    mainArtists: many(songArtists),
-    featuredArtists: many(songFeaturedArtists),
-    albums: many(albumSongs),
-    audioFiles: many(audioFiles),
-  }),
-);
-
-export const songArtistsRelations = relations(
-  songArtists,
-  ({ one }) => ({
-    song: one(songs, {
-      fields: [songArtists.songId],
-      references: [songs.id],
-    }),
-    artist: one(artists, {
-      fields: [songArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export const songFeaturedArtistsRelations = relations(
-  songFeaturedArtists,
-  ({ one }) => ({
-    song: one(songs, {
-      fields: [songFeaturedArtists.songId],
-      references: [songs.id],
-    }),
-    artist: one(artists, {
-      fields: [songFeaturedArtists.artistId],
-      references: [artists.id],
-    }),
-  }),
-);
-
-export const albumSongsRelations = relations(
-  albumSongs,
-  ({ one }) => ({
-    album: one(albums, {
-      fields: [albumSongs.albumId],
-      references: [albums.id],
-    }),
-    song: one(songs, {
-      fields: [albumSongs.songId],
-      references: [songs.id],
-    }),
-  }),
-);
-
-export const audioFilesRelations = relations(
-  audioFiles,
-  ({ one }) => ({
-    song: one(songs, {
-      fields: [audioFiles.songId],
-      references: [songs.id],
-    }),
-  }),
-);
-
-// ─── Inferred TypeScript Types ───────────────────────────
-
-export type Profile = typeof profiles.$inferSelect;
-export type NewProfile = typeof profiles.$inferInsert;
-
-export type Artist = typeof artists.$inferSelect;
-export type NewArtist = typeof artists.$inferInsert;
-
-export type Collective = typeof collectives.$inferSelect;
-export type NewCollective = typeof collectives.$inferInsert;
+export type Person = typeof people.$inferSelect;
+export type NewPerson = typeof people.$inferInsert;
 
 export type Album = typeof albums.$inferSelect;
 export type NewAlbum = typeof albums.$inferInsert;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import "../pieces/auth.css";
+import { GoogleIcon } from "@neondatabase/auth/react";
 
 export default function Login() {
     const router = useRouter();
@@ -32,6 +33,15 @@ export default function Login() {
         }
     }
 
+    async function handleOauth(e: MouseEvent, provider: string) {
+        e.preventDefault();
+
+        await authClient.signIn.social({
+            provider,
+            callbackURL: "/logged_in",
+        });
+    }
+
     return (
         <form className="auth-form" onSubmit={handleSubmit}>
             <h2>Log in</h2>
@@ -41,6 +51,9 @@ export default function Login() {
             <input id="login-password" name="password" type="password" autoComplete="current-password" required />
             {error && <p className="auth-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Signing in…" : "Log in"}</button>
+            <div className="oauth">
+                <button onClick={(e) => handleOauth(e as any, "google")}><GoogleIcon /></button>
+            </div>
             <p className="auth-switch">New here? <Link href="/sign-up">Create an account</Link></p>
         </form>
     );

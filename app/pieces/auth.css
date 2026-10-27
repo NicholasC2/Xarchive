@@ -64,3 +64,18 @@
   color: var(--accent-dark);
   font-weight: 650;
 }
+
+.auth-form .oauth {
+  display: flex;
+  flex-direction: row;
+}
+
+.auth-form .oauth button {
+  flex: 1;
+  background-color: var(--background-3);
+  max-height: 43px;
+}
+
+.auth-form .oauth svg {
+  height: 100%;
+}
