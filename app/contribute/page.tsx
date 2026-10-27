@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import "../pieces/form.css"
+import "../pieces/panel.css"
 import SongTab from "./song-tab";
 import AlbumTab from "./album-tab";
 import ArtistTab from "./artist-tab";
@@ -15,8 +15,16 @@ export default function ContributionForm() {
   return (
     <main className="archive-page">
       <section className="panel">
-        <div className="flex flex-row w-full gap-1" role="tablist" aria-label="Entry type">
-          {(["song", "album", "artist", "collective"] as const).map((entryMode) => <button key={entryMode} type="button" role="tab" aria-selected={page === entryMode} className={"w-full" + (page === entryMode ? " selected" : "")} onClick={() => setPage(entryMode)}>{entryMode === "collective" ? "Collective" : entryMode[0].toUpperCase() + entryMode.slice(1)}</button>)}
+        <div className="panel-row" role="tablist" aria-label="Entry type">
+          {(["song", "album", "artist", "collective"] as const).map((entryMode) => 
+            <button 
+              key={entryMode}
+              aria-selected={page === entryMode} 
+              onClick={() => setPage(entryMode)}
+            >
+              {entryMode}
+            </button>)
+          }
         </div>
         <form className="contribution-form">
           { page === "song" && <SongTab /> }
@@ -24,8 +32,8 @@ export default function ContributionForm() {
           { page === "artist" && <ArtistTab /> }
           { page === "collective" && <CollectiveTab /> }
 
-          <button type="submit" className="w-full" disabled={busy}>{busy ? "Saving entry…" : `Add ${page}`} <ArrowUpRight size={16} /></button>
-          <small>By contributing, you confirm this entry is okay to share with the archive.</small>
+          <button type="submit" className="w-full" disabled={busy}>{busy ? "Saving entry…" : `add ${page}`} <ArrowUpRight size={16} /></button>
+          <p className="panel-switch">By contributing, you confirm this entry is okay to share with the archive.</p>
         </form>
       </section>
     </main>

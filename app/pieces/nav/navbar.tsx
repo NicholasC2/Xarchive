@@ -4,7 +4,6 @@ import { ArrowUpRight, LogOut, Search } from "lucide-react";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import SearchInput from "@/app/pieces/search-input";
 import "./navbar.css";
 import { authClient } from "@/lib/auth/client";
 

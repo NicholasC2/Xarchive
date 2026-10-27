@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import "../pieces/auth.css";
+import "../pieces/panel.css"
 import { GoogleIcon } from "@neondatabase/auth/react";
 
 export default function SignUp() {
@@ -58,7 +58,7 @@ export default function SignUp() {
     }
 
     return (
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="panel" onSubmit={handleSubmit}>
             <h2>Create account</h2>
             <label htmlFor="signup-name">Display name</label>
             <input id="signup-name" name="username" type="text" autoComplete="name" maxLength={50} required />
@@ -68,12 +68,12 @@ export default function SignUp() {
             <input id="signup-password" name="password" type="password" autoComplete="new-password" minLength={8} required />
             <label htmlFor="signup-confirm">Confirm password</label>
             <input id="signup-confirm" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required />
-            {error && <p className="auth-error" role="alert">{error}</p>}
+            {error && <p className="panel-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
             <div className="oauth">
                 <button onClick={(e) => handleOauth(e as any, "google")}><GoogleIcon /></button>
             </div>
-            <p className="auth-switch">Already have an account? <Link href="/login">Log in</Link></p>
+            <p className="panel-switch">Already have an account? <Link href="/login">Log in</Link></p>
         </form>
     );
 }

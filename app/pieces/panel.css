@@ -1,4 +1,4 @@
-.auth-form {
+.panel {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -11,18 +11,18 @@
   max-width: 500px;
 }
 
-.auth-form h2 {
+.panel h2 {
   margin: 0 0 9px;
   font-size: 23px;
 }
 
-.auth-form label {
+.panel label {
   margin-top: 5px;
   font-size: 11px;
   font-weight: 650;
 }
 
-.auth-form input {
+.panel input {
   min-height: 42px;
   padding: 0 10px;
   border: 1px solid var(--line);
@@ -31,7 +31,7 @@
   font-size: 12px;
 }
 
-.auth-form button {
+.panel button {
   min-height: 43px;
   margin-top: 7px;
   border: 0;
@@ -42,40 +42,53 @@
   font-weight: 700;
 }
 
-.auth-form button:disabled {
+.panel button:disabled {
   cursor: wait;
   opacity: 0.65;
 }
 
-.auth-error {
+.panel-error {
   margin: 0;
   color: var(--accent-dark);
   font-size: 11px;
 }
 
-.auth-switch {
+.panel-switch {
   margin: 4px 0 0;
   color: var(--foreground-3);
   font-size: 10px;
   text-align: center;
 }
 
-.auth-switch a {
+.panel-switch a {
   color: var(--accent-dark);
   font-weight: 650;
 }
 
-.auth-form .oauth {
+.panel .oauth {
   display: flex;
   flex-direction: row;
 }
 
-.auth-form .oauth button {
+.panel .oauth button {
   flex: 1;
   background-color: var(--background-3);
   max-height: 43px;
 }
 
-.auth-form .oauth svg {
+.panel .oauth svg {
   height: 100%;
+}
+
+.panel .panel-row {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.panel .panel-row > * {
+  flex: 1;
+}
+.panel .panel-row > *[aria-selected="true"] {
+  background-color: var(--foreground-3);
 }

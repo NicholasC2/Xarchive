@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import "../pieces/auth.css";
+import "../pieces/panel.css"
 import { GoogleIcon } from "@neondatabase/auth/react";
 
 export default function Login() {
@@ -43,18 +43,18 @@ export default function Login() {
     }
 
     return (
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="panel" onSubmit={handleSubmit}>
             <h2>Log in</h2>
             <label htmlFor="login-email">Email</label>
             <input id="login-email" name="email" type="email" autoComplete="email" required />
             <label htmlFor="login-password">Password</label>
             <input id="login-password" name="password" type="password" autoComplete="current-password" required />
-            {error && <p className="auth-error" role="alert">{error}</p>}
+            {error && <p className="panel-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Signing in…" : "Log in"}</button>
             <div className="oauth">
                 <button onClick={(e) => handleOauth(e as any, "google")}><GoogleIcon /></button>
             </div>
-            <p className="auth-switch">New here? <Link href="/sign-up">Create an account</Link></p>
+            <p className="panel-switch">New here? <Link href="/sign-up">Create an account</Link></p>
         </form>
     );
 }
