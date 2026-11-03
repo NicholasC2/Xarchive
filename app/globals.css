@@ -55,7 +55,6 @@ body {
 }
 
 body {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -98,7 +97,7 @@ textarea:focus-visible {
   margin: 0 auto;
   padding: 30px 0 66px;
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: center;
 }
 

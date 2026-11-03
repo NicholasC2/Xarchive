@@ -37,10 +37,10 @@ export default function SearchInput({
   }
 
   return (
-    <div className="search-input">
+    <div className="drop">
       <input
         {...inputProps}
-        className={"w-full " + inputProps.className}
+        className={"drop-input " + inputProps.className}
         type="text"
         value={query}
         onChange={(event) => {

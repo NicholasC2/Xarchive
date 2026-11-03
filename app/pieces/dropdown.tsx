@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import "./dropdown.css";
+import "./drop.css";
 
 interface DropDownProps extends Omit<React.ComponentProps<"input">, "type"> {
   items?: string[];
@@ -10,22 +10,22 @@ interface DropDownProps extends Omit<React.ComponentProps<"input">, "type"> {
 
 export default function DropDown({
   items = [],
-  maxResults = 100,
+  maxResults,
   onChange,
   ...inputProps
 }: DropDownProps) {
   const [query, setQuery] = useState(String(inputProps.value ?? ""));
   const results = items
     .filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
-    .slice(0, maxResults);
+    .slice(0, maxResults ?? 99999);
 
   const [showResults, setShowResults] = useState(false);
 
   return (
-    <div className="dropdown">
+    <div className="drop">
       <input
         {...inputProps}
-        className={"w-full " + inputProps.className}
+        className={"drop-input " + inputProps.className}
         type="text"
         value={query}
         onChange={(event) => {
@@ -43,7 +43,7 @@ export default function DropDown({
         onBlur={() => setShowResults(false)}
       />
         {showResults && results.length > 0 && (
-          <ul className="dropdown-options" role="listbox">
+          <ul className="drop-list" role="listbox">
             {results.map((item) => (
               <li
                 key={item}

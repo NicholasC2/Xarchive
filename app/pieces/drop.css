@@ -1,9 +1,12 @@
-.search-input {
-  position: relative;
+.drop-input {
   width: 100%;
 }
 
-.search-input-options {
+.drop {
+  position: relative;
+}
+
+.drop-list {
   position: absolute;
   z-index: 30;
   top: 100%;
@@ -12,16 +15,13 @@
   display: flex;
   max-height: 240px;
   flex-direction: column;
-  gap: 0;
-  margin: 0;
-  padding: 0;
   overflow-y: auto;
   border: 1px solid var(--line);
   background: var(--background-1);
   list-style: none;
 }
 
-.search-input-options li {
+.drop-list li {
   padding: 9px 11px;
   color: var(--foreground-2);
   cursor: pointer;
@@ -30,7 +30,7 @@
   white-space: nowrap;
 }
 
-.search-input-options li:hover {
+.drop-list li:hover {
   background: var(--background-2);
   color: var(--foreground-1);
 }

@@ -94,10 +94,11 @@
   flex-direction: column;
 }
 
-.panel .panel-row > *,
-.panel .panel-column > * {
+.panel .panel-row > *:not(label),
+.panel .panel-column > *:not(label) {
   flex: 1;
 }
-.panel .panel-row > *[aria-selected="true"] {
+.panel .panel-row > *[aria-selected="true"],
+.panel .panel-column > *[aria-selected="true"] {
   background-color: var(--foreground-3);
 }
