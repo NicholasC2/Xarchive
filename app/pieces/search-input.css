@@ -23,7 +23,6 @@
 
 .search-input-options li {
   padding: 9px 11px;
-  overflow: hidden;
   color: var(--foreground-2);
   cursor: pointer;
   font-size: 11px;

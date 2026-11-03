@@ -22,9 +22,9 @@
   font-weight: 650;
 }
 
-.panel input {
+.panel input, .panel textarea {
   min-height: 42px;
-  padding: 0 10px;
+  padding: 10px;
   border: 1px solid var(--line);
   background: var(--background-1);
   color: var(--foreground-1);
@@ -80,13 +80,22 @@
   height: 100%;
 }
 
-.panel .panel-row {
+.panel .panel-row,
+.panel .panel-column {
   display: flex;
-  flex-direction: row;
-  gap: 2px;
+  gap: 5px;
 }
 
-.panel .panel-row > * {
+.panel .panel-row {
+  flex-direction: row;
+}
+
+.panel .panel-column {
+  flex-direction: column;
+}
+
+.panel .panel-row > *,
+.panel .panel-column > * {
   flex: 1;
 }
 .panel .panel-row > *[aria-selected="true"] {

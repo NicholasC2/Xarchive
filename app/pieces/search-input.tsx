@@ -40,6 +40,7 @@ export default function SearchInput({
     <div className="search-input">
       <input
         {...inputProps}
+        className={"w-full " + inputProps.className}
         type="text"
         value={query}
         onChange={(event) => {
@@ -48,7 +49,10 @@ export default function SearchInput({
         }}
         onKeyDown={(event) => {
           inputProps.onKeyDown?.(event);
-          if (event.key === "Tab" && results.length > 0) selectResult(results[0]);
+          if (event.key === "Tab" && results.length > 0) {
+            event.preventDefault();
+            selectResult(results[0]);
+          }
         }}
       />
       {query && results.length > 0 && (

@@ -1,4 +1,3 @@
-
 import {
   pgTable,
   pgEnum,
@@ -10,9 +9,9 @@ import {
   date,
   primaryKey,
   index,
-  check,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { genres } from "./constants/genre";
+import { sources } from "./constants/sources";
 
 // ─── Enums ──────────────────────────────────────────────
 
@@ -21,41 +20,8 @@ export type PersonType = (typeof personTypes)[number];
 
 export const personTypeEnum = pgEnum("person_type", personTypes);
 
-export const sources = [
-  "soundcloud",
-  "spotify",
-  "youtube",
-  "social media",
-  "unknown",
-] as const;
-
-export type AudioSource = (typeof sources)[number];
 export const audioSourceEnum = pgEnum("audio_source", sources);
 
-export const genres = [
-  "pop",
-  "rock",
-  "hip-hop",
-  "rnb",
-  "electronic",
-  "dance",
-  "jazz",
-  "blues",
-  "classical",
-  "country",
-  "folk",
-  "metal",
-  "punk",
-  "reggae",
-  "latin",
-  "world",
-  "religious",
-  "soundtrack",
-  "experimental",
-  "other",
-] as const;
-
-export type Genre = (typeof genres)[number];
 export const genreEnum = pgEnum("genre", genres);
 
 // ─── People ─────────────────────────────────────────────

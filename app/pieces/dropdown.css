@@ -1,0 +1,33 @@
+.dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-options {
+    position: absolute;
+    z-index: 30;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: flex;
+    max-height: 240px;
+    flex-direction: column;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    background: var(--background-1);
+    list-style: none;
+}
+
+.dropdown-options li {
+    padding: 9px 11px;
+    color: var(--foreground-2);
+    cursor: pointer;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdown-options li:hover {
+    background: var(--background-2);
+    color: var(--foreground-1);
+}
