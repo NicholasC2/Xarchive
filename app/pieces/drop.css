@@ -4,6 +4,7 @@
 
 .drop {
   position: relative;
+  overflow: visible;
 }
 
 .drop-list {

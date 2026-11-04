@@ -127,9 +127,3 @@ button:disabled {
 button.selected {
   background: var(--surface-1);
 }
-
-.panel {
-  background-color: var(--background-2);
-  padding: 12px;
-  font-size: 12px;
-}
