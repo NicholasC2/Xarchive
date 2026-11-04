@@ -23,6 +23,7 @@ export default function ContributionForm() {
               key={entryMode}
               aria-selected={page === entryMode} 
               onClick={() => setPage(entryMode)}
+              className="flex-1"
             >
               {entryMode}
             </button>)

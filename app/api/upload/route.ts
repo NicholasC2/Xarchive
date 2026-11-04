@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const key = `uploads/${randomUUID()}`;
+    const key = `${contentType.startsWith("image/") ? "images" : "audio_files"}/${randomUUID()}`;
 
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET,

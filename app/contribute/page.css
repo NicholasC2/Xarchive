@@ -1,11 +1,14 @@
 .upload {
-    flex: 1;
-    min-height: 100px;
     display: flex;
     flex-direction: column;
     gap: 5px;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--line);
     cursor: pointer;
+}
+
+.item {
+    width: 100px;
+    height: 100px;
+    border: 1px solid var(--line);
 }

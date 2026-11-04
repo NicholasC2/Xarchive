@@ -1,37 +1,92 @@
 import { genres } from "@/lib/db/constants/genre";
 import DropDown from "../pieces/dropdown";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 
 export default function SongTab() {
-  return <>
-    <label>Name</label>
-    <input name="song-name" type="text" autoComplete="song-name" />
-    <label>Bio</label>
-    <textarea name="song-bio" autoComplete="song-bio" ></textarea>
-    <div className="panel-row">
-      <div className="panel-column">
-        <label>Tags</label>
-        <input name="tags" type="text"/>
-      </div>
-      <div className="panel-column">
-        <label>Genre</label>
-        <DropDown
-          items={genres.map(g => g.toString())}
-        />
-      </div>
-    </div>
-    <div className="panel-row">
-      <div className="panel-column">
-        <label>Release Date</label>
-        <input type="date" className="h-full" />
-      </div>
-      <div className="panel-column">
-        <label>Cover Image</label>
-        <div className="upload">
-          <Upload />
-          <span>Upload</span>
-        </div>
-      </div>
-    </div>
-  </>
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [images, setImages] = useState<File[]>([]);
+	const [confirmDelete, setConfirmDelete] = useState(-1);
+
+	function uploadImage() {
+		fileInputRef.current?.click();
+	}
+  
+	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const files = Array.from(e.target.files ?? []);
+	
+		setImages(prev => [...prev, ...files]);
+		e.target.value = "";
+	}
+
+	return <>
+		<label>Name</label>
+		<input name="song-name" type="text" autoComplete="song-name" />
+		<label>Bio</label>
+		<textarea name="song-bio" autoComplete="song-bio" ></textarea>
+		<div className="panel-row">
+			<div className="panel-column">
+				<label>Tags</label>
+				<input name="tags" type="text"/>
+			</div>
+			<div className="panel-column">
+				<label>Genre</label>
+				<DropDown
+				items={genres.map(g => g.toString())}
+				/>
+			</div>
+			<div className="panel-column">
+				<label>Release Date</label>
+				<input type="date" className="h-full" />
+			</div>
+		</div>
+		<div className="panel-row">
+			<div className="panel-column">
+				<label>Cover Image(s)</label>
+
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="image/*"
+					onChange={handleImageChange}
+					hidden
+				/>
+
+				<div className="panel-row" style={{overflow: "auto"}}>
+					{images.map((image, index) => 
+						<div className="item relative" key={index}>
+							<Image src={URL.createObjectURL(image)} alt={image.name} width={100} height={100} />
+							<X 
+								className="absolute top-0 right-0 z-10 cursor-pointer" 
+								onClick={() => setConfirmDelete(index)}
+							/>
+						</div>
+					)}
+
+					<div className="upload item" onClick={uploadImage}>
+						<Upload />
+						<span>Upload</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		{confirmDelete > -1 && (
+			<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+				<div className="rounded-xl p-8 panel-nosize">
+					Are you sure you want to remove this cover?
+					<div className="panel-row">
+						<button onClick={() => setConfirmDelete(-1)} className="flex-1" style={{background: "var(--surface-1)"}}>No</button>
+						<button onClick={() => {
+							setImages(prev => prev.filter((_, i) => i !== confirmDelete));
+							setConfirmDelete(-1);
+						}} className="flex-1">
+							Yes
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
+	</>
 }
