@@ -52,18 +52,37 @@ export default function SongTab() {
 				hidden
 			/>
 
-			<div className="panel-row panel-scroll">
+			<div className="panel-row panel-scroll h-[134px]">
 				{images.map((image, index) => 
-					<div className="item relative" key={index}>
-						<Image src={URL.createObjectURL(image)} alt={image.name} width={100} height={100} />
-						<X 
-							className="absolute top-0 right-0 z-10 cursor-pointer" 
-							onClick={() => setConfirmDelete(index)}
+					<div className="flex flex-col item w-[100px]" key={index}>
+						<div className="flex flex-row items-center p-1 h-[34px] w-[100px]">
+							<span>{index === 0 ? "Main" : "Alternate"}</span>
+
+							<div className="flex-1" />
+
+							<X
+								width={20}
+								className="cursor-pointer"
+								onClick={() => setConfirmDelete(index)}
+							/>
+						</div>
+						<Image
+							src={URL.createObjectURL(image)}
+							alt={image.name}
+							width={0}
+							height={0}
+							sizes="100%"
+							style={{
+								width: "100px",
+								height: "100px",
+								objectFit: "cover",
+								flex: 1
+							}}
 						/>
 					</div>
 				)}
 
-				<div className="upload item" onClick={uploadImage}>
+				<div className="upload item min-w-[100px] min-h-full" onClick={uploadImage}>
 					<Upload />
 					<span>Upload</span>
 				</div>
