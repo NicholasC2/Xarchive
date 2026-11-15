@@ -1,15 +1,12 @@
 {
   "name": "x-archive",
   "version": "0.1.0",
-  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
@@ -17,10 +14,7 @@
     "@ffmpeg/core": "^0.12.10",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
-    "@neon/config": "^1.9.4",
-    "@neon/env": "^1.6.5",
-    "@neondatabase/auth": "^0.7.0-beta",
-    "@neondatabase/serverless": "^1.2.0",
+    "better-auth": "^1.7.25",
     "dotenv": "^18.0.9",
     "drizzle-orm": "^0.45.4",
     "jszip": "^3.10.2",
@@ -31,21 +25,14 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.6.5",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.3",
-    "tailwindcss": "^4.3.3",
+    "eslint-config-next": "^16.4.6",
+    "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3"
-  },
-  "allowScripts": {
-    "unrs-resolver@1.12.2": true,
-    "esbuild": true,
-    "core-js@3.51.0": true,
-    "es5-ext@0.10.64": true
   }
 }
