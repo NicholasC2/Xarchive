@@ -1,6 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
 let bucket: S3Client | undefined;
+let bucketName: string | undefined;
 
 if(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.env.R2_BUCKET_NAME) {  
   bucket = new S3Client({
@@ -11,6 +12,8 @@ if(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && process.e
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
     },
   });
+
+  bucketName = process.env.R2_BUCKET_NAME;
 }
 
-export { bucket };
+export { bucket, bucketName };

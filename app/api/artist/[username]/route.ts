@@ -2,12 +2,12 @@ import { db } from "@/lib/db"
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ username: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { username } = await params;
+  const { id } = await params;
 
-  const artist = await db.query.people.findFirst({
-    where: (artist, {eq}) => eq(artist.username, username)
+  const artist = await db?.query.artists.findFirst({
+    where: (artist, {eq}) => eq(artist.id, id)
   }).execute();
 
   if(artist) {
