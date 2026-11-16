@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import "../pieces/panel.css"
-import { GoogleIcon } from "@neondatabase/auth/react";
+import { SiGoogle } from "@icons-pack/react-simple-icons";
 
 export default function SignUp() {
     const router = useRouter();
@@ -53,7 +53,7 @@ export default function SignUp() {
 
         await authClient.signIn.social({
             provider,
-            callbackURL: "/logged_in",
+            callbackURL: "/",
         });
     }
 
@@ -71,7 +71,7 @@ export default function SignUp() {
             {error && <p className="panel-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
             <div className="oauth">
-                <button onClick={(e) => handleOauth(e as any, "google")}><GoogleIcon /></button>
+                <button onClick={(e) => handleOauth(e as any, "google")}><SiGoogle /></button>
             </div>
             <p className="panel-switch">Already have an account? <Link href="/login">Log in</Link></p>
         </form>

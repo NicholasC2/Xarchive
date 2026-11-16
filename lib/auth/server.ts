@@ -1,13 +1,10 @@
-import { createNeonAuth } from '@neondatabase/auth/next/server';
+import { betterAuth } from 'better-auth';
+import { pool } from '../db';
 
-const baseUrl = process.env.NEON_AUTH_BASE_URL;
-const cookieSecret = process.env.NEON_AUTH_COOKIE_SECRET;
+export const auth = betterAuth({
+  database: pool,
 
-if (!baseUrl || !cookieSecret) {
-  throw new Error('NEON_AUTH_BASE_URL and NEON_AUTH_COOKIE_SECRET must be configured.');
-}
-
-export const auth = createNeonAuth({
-  baseUrl,
-  cookies: { secret: cookieSecret },
+  emailAndPassword: {
+    enabled: true,
+  }
 });

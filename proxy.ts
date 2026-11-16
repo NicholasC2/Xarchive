@@ -1,12 +1,21 @@
-import { auth } from "@/lib/auth/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
-export default auth.middleware({
-  loginUrl: "/login",
-});
+export function proxy(request: NextRequest) {
+  const sessionCookie = getSessionCookie(request);
+
+  if (!sessionCookie) {
+    return NextResponse.redirect(
+      new URL("/login", request.url)
+    );
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
     "/logged_in",
-    "/profile/edit/:path*"
+    "/profile/edit/:path*",
   ],
 };

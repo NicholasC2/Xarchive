@@ -1,5 +1,5 @@
-'use client';
+import { createAuthClient } from "better-auth/react";
 
-import { createAuthClient } from '@neondatabase/auth/next';
-
-export const authClient = createAuthClient();
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL,
+});

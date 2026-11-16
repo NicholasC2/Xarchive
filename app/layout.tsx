@@ -27,10 +27,8 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({
   children,
 }: LayoutProps<"/">) {
-  const session = await auth.getSession({
-    fetchOptions: {
-      headers: await headers(),
-    },
+  const session = await auth.api.getSession({
+    headers: await headers(),
   });
 
   return (
@@ -39,7 +37,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar user={session.data?.user ?? null} />
+        <Navbar user={session?.user ?? null} />
         {children}
         <Footer />
       </body>
