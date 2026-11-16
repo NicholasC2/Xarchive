@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
-import Navbar from "./pieces/nav/navbar";
-import Footer from "./pieces/footer";
+import "./panel.css"
+import Navbar from "./navbar/navbar";
 import { auth } from "@/lib/auth/server";
 
 const geistSans = Geist({
@@ -39,7 +39,9 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <Navbar user={session?.user ?? null} />
         {children}
-        <Footer />
+        <footer className="flex items-center gap-x-[8px] gap-y-[22px] mt-auto p-[18px] text-[10px]" style={{borderTop: "1px solid var(--line)"}}>
+          <p>Cool archive site</p>
+        </footer>
       </body>
     </html>
   );

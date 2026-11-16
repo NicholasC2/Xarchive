@@ -1,5 +1,5 @@
 import Link from "next/link";
-import "./pieces/error.css";
+import "./peices/error.css";
 
 export default function NotFound() {
   return (

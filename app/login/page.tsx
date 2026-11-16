@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import "../pieces/panel.css"
 import { SiGoogle } from "@icons-pack/react-simple-icons";
 
 export default function Login() {

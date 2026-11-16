@@ -1,107 +1,127 @@
+import { sql } from "drizzle-orm";
 import {
-  pgTable,
-  pgEnum,
+  integer,
+  real,
+  sqliteTable,
   text,
-  bigint,
-  doublePrecision,
-  timestamp,
-  date,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/sqlite-core";
+import { Genre } from "./constants/genre";
+import { mediaTypes } from "./constants/mediaType";
 
-import { genres } from "./constants/genre";
-import { sources } from "./constants/sources";
-
-export const audioSourceEnum = pgEnum("audio_source", sources);
-
-export const genreEnum = pgEnum("genre", genres);
-
-export const mediaTypes = [
-  "image",
-  "audio",
-  "video",
-  "cover",
-  "banner" // N/A for albums or songs
-] as const;
-export type MediaType = (typeof mediaTypes)[number];
-
-export const mediaTypeEnum = pgEnum("media_type", mediaTypes);
-
-export const artists = pgTable("artists", {
+export const artists = sqliteTable("artists", {
   id: text("id").primaryKey(),
 
   name: text("name").notNull(),
   bio: text("bio").notNull().default(""),
 
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  }).notNull().defaultNow(),
+  createdAt: integer("created_at", {
+    mode: "timestamp",
+  }).notNull().default(sql`(unixepoch())`),
 });
 
-export const mediaFiles = pgTable(
-  "media_files",
-  {
-    id: text("id").primaryKey(),
-
-    type: mediaTypeEnum("type").notNull(),
-
-    url: text("url").notNull(),
-
-    mimeType: text("mime_type"),
-    format: text("format"),
-
-    song: text("song").references(() => songs.id, { onDelete: "cascade" }),
-    album: text("album").references(() => albums.id, { onDelete: "cascade" }),
-    artist: text("artist").references(() => artists.id, { onDelete: "cascade" }),
-
-    sizeBytes: bigint("size_bytes", { mode: "number" }),
-
-    duration: doublePrecision("duration"),
-
-    createdAt: timestamp("created_at", {
-      withTimezone: true,
-    }).notNull().defaultNow(),
-  }
-);
-
-export const albums = pgTable("albums", {
+export const albums = sqliteTable("albums", {
   id: text("id").primaryKey(),
 
   name: text("name").notNull(),
   bio: text("bio").notNull().default(""),
 
-  tags: text("tags").array().notNull().default([]),
-  genres: genreEnum("genres").array().notNull().default([]),
+  tags: text("tags", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 
-  artists: text("artists").array().notNull().default([]),
-  featuredArtists: text("featured_artists").array().notNull().default([]),
+  genres: text("genres", { mode: "json" })
+    .$type<Genre[]>()
+    .notNull()
+    .default([]),
 
-  releaseDate: date("release_date", { mode: "date" }),
+  artists: text("artists", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  }).notNull().defaultNow(),
+  featuredArtists: text("featured_artists", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+
+  releaseDate: text("release_date"),
+
+  createdAt: integer("created_at", {
+    mode: "timestamp",
+  }).notNull().default(sql`(unixepoch())`),
 });
 
-export const songs = pgTable("songs", {
+export const songs = sqliteTable("songs", {
   id: text("id").primaryKey(),
 
   name: text("name").notNull(),
   bio: text("bio").notNull().default(""),
 
-  tags: text("tags").array().notNull().default([]),
-  genres: genreEnum("genres").array().notNull().default([]),
+  tags: text("tags", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 
-  artists: text("artists").array().notNull().default([]),
-  featuredArtists: text("featured_artists").array().notNull().default([]),
+  genres: text("genres", { mode: "json" })
+    .$type<Genre[]>()
+    .notNull()
+    .default([]),
 
-  album: text("album").references(() => albums.id, { onDelete: "cascade" }),
+  artists: text("artists", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 
-  releaseDate: date("release_date", { mode: "date" }),
+  featuredArtists: text("featured_artists", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
 
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  }).notNull().defaultNow(),
+  album: text("album").references(() => albums.id, {
+    onDelete: "cascade",
+  }),
+
+  releaseDate: text("release_date"),
+
+  createdAt: integer("created_at", {
+    mode: "timestamp",
+  }).notNull().default(sql`(unixepoch())`),
 });
+
+export const mediaFiles = sqliteTable("media_files", {
+  id: text("id").primaryKey(),
+
+  type: text("type", {
+    enum: mediaTypes,
+  }).notNull(),
+
+  url: text("url").notNull(),
+
+  mimeType: text("mime_type"),
+  format: text("format"),
+
+  song: text("song").references(() => songs.id, {
+    onDelete: "cascade",
+  }),
+
+  album: text("album").references(() => albums.id, {
+    onDelete: "cascade",
+  }),
+
+  artist: text("artist").references(() => artists.id, {
+    onDelete: "cascade",
+  }),
+
+  sizeBytes: integer("size_bytes"),
+
+  duration: real("duration"),
+
+  createdAt: integer("created_at", {
+    mode: "timestamp",
+  }).notNull().default(sql`(unixepoch())`),
+});
+
 
 export type Artist = typeof artists.$inferSelect;
 export type NewArtist = typeof artists.$inferInsert;
