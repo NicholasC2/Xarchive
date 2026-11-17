@@ -1,5 +1,23 @@
-import { drizzle } from "drizzle-orm/d1";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
-export const db = drizzle(getCloudflareContext().env.DB, { schema });
+import * as schema from "./schema";
+import * as authSchema from "../../auth-schema";
+
+if(!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not defined")
+}
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool, {
+    schema: {
+        ...schema,
+        ...authSchema,
+    },
+});
+
 export * from "./schema";
+export * from "../../auth-schema";

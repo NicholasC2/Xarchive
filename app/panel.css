@@ -1,119 +1,83 @@
 .panel {
-  box-sizing: border-box;
-  overflow: hidden;
-  
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
+	box-sizing: border-box;
+	overflow: visible;
+	
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 10px;
 
-  max-width: 90%;
-  min-width: 30%;
-  box-sizing: border-box;
+	min-width: 50%;
+	max-width: 90%;
+	box-sizing: border-box;
 
-  padding: clamp(22px, 4vw, 34px);
-  margin: 24px auto;
+	padding: clamp(22px, 4vw, 34px);
+	margin: 24px auto;
 
-  border: 1px solid var(--line);
-  background: var(--background-2);
-  font-size: 12px;
+	border: 1px solid var(--line);
+	background: var(--background-2);
+	font-size: 12px;
 }
 
 .panel .nosize {
-  max-width: unset;
-  max-height: unset;
-  width: unset;
-  height: unset;
-}
-
-.panel h2 {
-  margin: 0 0 9px;
-  font-size: 23px;
-}
-
-.panel label {
-  margin-top: 5px;
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.panel input, .panel textarea {
-  min-height: 42px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  background: var(--background-1);
-  color: var(--foreground-1);
-  font-size: 12px;
-}
-
-.panel button {
-  min-height: 43px;
-  margin-top: 7px;
-  border: 0;
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.panel button:disabled {
-  cursor: wait;
-  opacity: 0.65;
+	max-width: unset;
+	max-height: unset;
+	width: unset;
+	height: unset;
 }
 
 .panel-error {
-  margin: 0;
-  color: var(--accent-dark);
-  font-size: 11px;
+	margin: 0;
+	color: var(--accent-dark);
+	font-size: 11px;
 }
 
 .panel-switch {
-  margin: 4px 0 0;
-  color: var(--foreground-3);
-  font-size: 10px;
-  text-align: center;
-}
-
-.panel-switch a {
-  color: var(--accent-dark);
-  font-weight: 650;
+	margin: 4px 0 0;
+	color: var(--foreground-3);
+	font-size: 10px;
+	text-align: center;
 }
 
 .panel .oauth {
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
 }
 
 .panel .oauth button {
-  flex: 1;
-  background-color: var(--background-3);
-  max-height: 43px;
+	flex: 1;
+	background-color: var(--background-3);
+	max-height: 43px;
 }
 
 .panel .oauth svg {
-  height: 100%;
+	height: 100%;
 }
 
 .panel .panel-row,
 .panel .panel-column {
-  display: flex;
-  gap: 5px;
+	display: flex;
+	gap: 5px;
 }
 
 .panel-scroll {
-  overflow: auto;
+	overflow: auto;
 }
 
 .panel .panel-row {
-  flex-direction: row;
+	flex-direction: row;
 }
 
 .panel .panel-column {
-  flex-direction: column;
+	flex-direction: column;
+}
+
+.panel .panel-row > *,
+.panel .panel-column > * {
+	flex: 1;
 }
 
 .panel .panel-row > *[aria-selected="true"],
 .panel .panel-column > *[aria-selected="true"] {
-  background-color: var(--foreground-3);
+	background-color: var(--foreground-3);
 }

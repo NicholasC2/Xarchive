@@ -1,0 +1,43 @@
+.drop-input {
+	width: 100%;
+    min-height: 42px;
+
+	border: 1px solid var(--line);
+	
+    background: var(--background-1);
+    color: var(--foreground-1);
+}
+
+.dropdown {
+	position: relative;
+	overflow: visible;
+}
+
+.drop-list {
+	position: fixed;
+	z-index: 30;
+
+	max-height: 240px;
+
+	display: flex;
+	flex-direction: column;
+
+	overflow-y: auto;
+	border: 1px solid var(--line);
+	background: var(--background-1);
+	list-style: none;
+}
+
+.drop-list li {
+	padding: 9px 11px;
+	color: var(--foreground-2);
+	cursor: pointer;
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.drop-list li:hover {
+	background: var(--background-2);
+	color: var(--foreground-1);
+}

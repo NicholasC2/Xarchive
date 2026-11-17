@@ -1,6 +1,6 @@
 "use client";
 
-import SongTab from "./song-edit";
+import SongEdit from "./song-edit";
 import AlbumTab from "./album-tab";
 import ArtistTab from "./artist-tab";
 import { useState } from "react";
@@ -25,11 +25,9 @@ export default function ContributionForm() {
             </button>)
           }
         </div>
-        { page === "song" && <SongTab /> }
+        { page === "song" && <SongEdit /> }
         { page === "album" && <AlbumTab /> }
         { page === "artist" && <ArtistTab /> }
-
-        <p className="panel-switch">By contributing, you confirm this entry is okay to share with the archive.</p>
       </section>
     </main>
   );

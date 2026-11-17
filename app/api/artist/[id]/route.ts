@@ -1,20 +1,18 @@
 import { db } from "@/lib/db"
+import { NextRequest } from "next/server";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function GET(request: NextRequest) {
+    const id = request.nextUrl.searchParams.get("id")?.trim() ?? "";
 
-  const artist = await db?.query.artists.findFirst({
-    where: (artist, {eq}) => eq(artist.id, id)
-  }).execute();
+	const artist = await db.query.artists.findFirst({
+		where: (artist, {eq}) => eq(artist.id, id)
+	}).execute();
 
-  if(artist) {
-    return Response.json(artist)
-  } else {
-    return Response.json({error: "artist not found"}, {
-      status: 404
-    })
-  }
+	if(artist) {
+		return Response.json(artist)
+	} else {
+		return Response.json({error: "artist not found"}, {
+			status: 404
+		})
+	}
 }

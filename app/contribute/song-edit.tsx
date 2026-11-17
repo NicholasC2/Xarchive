@@ -1,40 +1,114 @@
-import { genres } from "@/lib/db/constants/genre";
-import DropDown from "../drop/dropdown";
+import { Genre } from "@/lib/db/constants/genre";
+import DropDown from "../dropdown/dropdown";
 import { ArrowUpRight } from "lucide-react";
-import { useRef, useState } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
+import { Song } from "@/lib/db";
+import SearchInput from "../dropdown/search-input";
+import MediaEdit from "./media-edit";
 
 interface SongEditProps {
 	songId?: string;
 }
 
-export default async function SongTab({ songId }: SongEditProps) {
+export default function SongEdit({ songId }: SongEditProps) {
 	const [busy, setBusy] = useState(false);
 
-	const songData = songId ? await (await fetch(`/api/song/${songId}`)).json() : null;
+	const [name, setName] = useState("");
+	const [bio, setBio] = useState("");
+	const [artists, setArtists] = useState("");
+	const [featuredArtists, setFeaturedArtists] = useState("");
+	const [genres, setGenres] = useState("");
+	const [tags, setTags] = useState("");
+	const [releaseDate, setReleaseDate] = useState("");
+	const [media, setMedia] = useState([""]);
+
+	const joiner = ", ";
+
+	useEffect(() => {
+		(async()=>{
+			const songData: Song | null = songId ? await (await fetch(`/api/song/${songId}`)).json() : null;
+
+			if(songData) {
+				setName(songData.name);
+				setBio(songData.bio);
+				setArtists(songData.artists.join(joiner));
+				setFeaturedArtists(songData.featuredArtists.join(joiner));
+				setGenres(songData.genres.join(joiner));
+				setTags(songData.tags.join(joiner));
+				setReleaseDate(songData.releaseDate ?? "");
+				setMedia(songData.media);
+			}
+		})()
+	})
+
+	const searchArtists = useCallback(async (query: string): Promise<string[]> => {
+		const response = await fetch(
+			`/api/search/artists${query ? `?query=${encodeURIComponent(query)}` : "?"+crypto.randomUUID()}`
+		);
+
+		if (!response.ok) return [];
+
+		return response.json();
+	}, []);
 
 	return <form className="flex flex-col">
 		<label>Name</label>
-		<input name="song-name" type="text" autoComplete="song-name" />
+		<input
+			type="text" 
+			autoComplete="song-name" 
+			value={name}
+			onChange={(e) => setName(e.target.value)}
+		/>
 		<label>Bio</label>
-		<textarea name="song-bio" autoComplete="song-bio" ></textarea>
+		<textarea
+			autoComplete="song-bio"
+			value={bio}
+			onChange={(e) => setBio(e.target.value)}
+		/>
+		<label>Artist/s</label>
+		<SearchInput
+			autoComplete="song-name" 
+			value={artists}
+			onChange={(e) => setArtists(e.target.value)}
+			searchable={searchArtists}
+		/>
+		<label>Featured Artist/s</label>
+		<SearchInput
+			autoComplete="song-name" 
+			value={featuredArtists}
+			onChange={(e) => setFeaturedArtists(e.target.value)}
+		/>
 		<div className="panel-row">
 			<div className="panel-column">
 				<label>Tags</label>
-				<input name="tags" type="text"/>
+				<input
+					type="text"
+					value={tags}
+					onChange={(e) => setTags(e.target.value)}
+				/>
 			</div>
 			<div className="panel-column">
 				<label>Genre</label>
 				<DropDown
-				items={genres.map(g => g.toString())}
+					items={Object.values(Genre)}
+					value={genres}
+					onChange={(e) => setGenres(e.target.value)}
 				/>
 			</div>
 			<div className="panel-column">
 				<label>Release Date</label>
-				<input type="date" className="h-full" />
+				<input 
+					type="date" 
+					className="h-full" 
+					value={releaseDate ?? ""} 
+					onChange={(e) => setReleaseDate(e.target.value)}
+				/>
 			</div>
 		</div>
 
-        <button type="submit" className="w-full" disabled={busy}>{busy ? "saving entry…" : `add song`} <ArrowUpRight size={16} /></button>
+		<label>Media</label>
+		<MediaEdit mediaDispatch={[media, setMedia]} />
+
+        <button type="submit" className="w-full" disabled={busy}>{busy ? "saving entry…" : (songId ? `edit song` : `add song`)} <ArrowUpRight size={16} /></button>
 	</form>
 }
