@@ -5,7 +5,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
@@ -17,35 +16,29 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@icons-pack/react-simple-icons": "^13.15.1",
-    "@opennextjs/cloudflare": "^1.20.17",
     "better-auth": "^1.7.25",
-    "dotenv": "^18.0.9",
+    "dotenv": "^18.0.10",
     "drizzle-orm": "^0.45.4",
     "jszip": "^3.10.2",
-    "lucide-react": "^1.61.0",
+    "lucide-react": "^1.74.0",
     "next": "^16.4.6",
+    "pg": "^8.23.1",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "pg": "^8.23.1"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261116.1",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.6",
     "tailwindcss": "^4.3.5",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "allowScripts": {
-    "es5-ext@0.10.64": true,
     "esbuild@0.18.20": true,
     "esbuild@0.25.12": true,
-    "esbuild@0.28.2": true,
-    "workerd@1.20261113.1": true
+    "esbuild@0.28.2": true
   }
 }
