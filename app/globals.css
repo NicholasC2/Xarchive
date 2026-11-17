@@ -17,7 +17,14 @@
     --accent-dark: #fa746d;
 
     --line: #3a3a36;
+
     --success: #77c99b;
+    --fail: #e07878;
+    --warn: #e5bd70;
+
+    --success-bg: #1e3329;
+    --fail-bg: #382323;
+    --warn-bg: #382f1e;
 }
 
 @media (prefers-color-scheme: light) {
@@ -38,7 +45,14 @@
         --accent-dark: #a71e1e;
 
         --line: #d5d5d0;
-        --success: #286b4c;
+        
+        --success: #77c99b;
+        --fail: #c74747;
+        --warn: #a87518;
+
+        --success-bg: #e3f1e8;
+        --fail-bg: #f8e5e5;
+        --warn-bg: #f5edda;
     }
 }
 

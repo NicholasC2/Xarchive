@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -14,7 +13,7 @@ import { MediaType, mediaTypes } from "@/lib/db/constants/mediaType";
 import DropDown from "../dropdown/dropdown";
 import { AudioSource, sources } from "@/lib/db/constants/sources";
 
-interface MediaEntry {
+export interface MediaEntry {
     file: File | null;
     media: MediaFile;
     isNew: boolean;
@@ -22,111 +21,61 @@ interface MediaEntry {
 
 interface MediaEditProps {
     mediaDispatch?: [
-        string[],
-        Dispatch<SetStateAction<string[]>>
+        MediaEntry[],
+        Dispatch<SetStateAction<MediaEntry[]>>
     ];
 }
 
 export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
-    const [internalMedia, setInternalMedia] = useState<string[]>([]);
+    const [media, setMedia] = mediaDispatch ?? useState<MediaEntry[]>([]);
 
-    const [media, setMedia] = mediaDispatch ?? [
-        internalMedia,
-        setInternalMedia,
-    ];
+    function getMediaType(file: File): MediaType | null {
+        const mimeCategory = file.type.split("/")[0];
 
-    const [mediaData, setMediaData] = useState<MediaEntry[]>([]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function fetchMedia() {
-            if (!media.length) {
-                setMediaData([]);
-                return;
-            }
-
-            const results = await Promise.all(
-                media.filter(Boolean).map(async url => {
-                    const response = await fetch(
-                        `/api/media/${encodeURIComponent(url)}`
-                    );
-
-                    if (!response.ok) return null;
-
-                    const metadata = await response.json() as MediaFile;
-
-                    return {
-                        file: null,
-                        media: metadata,
-                        isNew: false,
-                    } as MediaEntry;
-                })
-            );
-
-            if (!cancelled) {
-                setMediaData(previous => {
-                    const newFiles = previous.filter(entry => entry.isNew);
-
-                    return [
-                        ...results.filter(
-                            (entry): entry is MediaEntry => entry !== null
-                        ),
-                        ...newFiles,
-                    ];
-                });
-            }
+        switch (mimeCategory) {
+            case "image":
+                return "Image";
+            case "audio":
+                return "Audio";
+            case "video":
+                return "Video";
+            default:
+                return null;
         }
-
-        fetchMedia().catch(console.error);
-
-        return () => {
-            cancelled = true;
-        };
-    }, [media]);
+    }
 
     function addFile(file: File | undefined) {
         if(!file) return;
 
-        const type = file.type.split("/")[0];
+        if (!mediaTypes.includes(getMediaType(file) as MediaType)) return;
 
-        if (!mediaTypes.includes(type as MediaType)) return;
-
-        setMediaData(previous => [...previous, {
+        setMedia(previous => [...previous, {
             file,
             isNew: true,
             media: {
                 url: "",
-                name: file.name,
+                name: file.name.slice(0, file.name.lastIndexOf(".")),
                 createdAt: new Date(),
                 format: file.name.split(".").pop() ?? "",
                 mimeType: file.type,
                 sizeBytes: file.size,
-                source: "unknown",
-                type: type as MediaType,
+                source: "Unknown",
+                type: getMediaType(file) as MediaType,
             } as MediaFile,
         }]);
     }
 
     function removeFile(index: number) {
-        const entry = mediaData[index];
-
-        setMediaData(previous =>
-            previous.filter((_, i) => i !== index)
+        setMedia(previous =>
+            previous.filter((m, i) => i !== index)
         );
-
-        if (!entry.isNew) {
-            setMedia(previous =>
-                previous.filter(url => url !== entry.media.url)
-            );
-        }
     }
 
     function updateMedia(
         index: number,
         updates: Partial<MediaFile>
     ) {
-        setMediaData(previous =>
+        setMedia(previous =>
             previous.map((entry, i) =>
                 i === index
                     ? {
@@ -142,16 +91,16 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     }
 
     const imageTypes = [
-        "cover-back",
-        "cover-front",
-        "banner",
-        "thumbnail",
-        "image"
+        "Cover back",
+        "Cover front",
+        "Banner",
+        "Thumbnail",
+        "Image"
     ]
 
     return (
         <div className="grid gap-2 grid-cols-2">
-            {mediaData.map((entry, index) => (
+            {media.map((entry, index) => (
                 <div 
                     className="panel nosize relative" 
                     style={{
@@ -197,7 +146,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                         />
                     </div>}
 
-                    {entry.media.type == "audio" && <div>
+                    {entry.media.type == "Audio" && <div>
                         <label>Audio Source:</label>
                         <DropDown
                             items={sources.values().toArray()}

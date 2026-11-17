@@ -1,10 +1,12 @@
+"use client";
+
 import { Genre } from "@/lib/db/constants/genre";
 import DropDown from "../dropdown/dropdown";
 import { ArrowUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Song } from "@/lib/db";
 import SearchInput from "../dropdown/search-input";
-import MediaEdit from "./media-edit";
+import MediaEdit, { MediaEntry } from "./media-edit";
 
 interface SongEditProps {
 	songId?: string;
@@ -20,7 +22,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 	const [genres, setGenres] = useState("");
 	const [tags, setTags] = useState("");
 	const [releaseDate, setReleaseDate] = useState("");
-	const [media, setMedia] = useState([""]);
+	const [media, setMedia] = useState<MediaEntry[]>([]);
 
 	const joiner = ", ";
 
@@ -36,14 +38,23 @@ export default function SongEdit({ songId }: SongEditProps) {
 				setGenres(songData.genres.join(joiner));
 				setTags(songData.tags.join(joiner));
 				setReleaseDate(songData.releaseDate ?? "");
-				setMedia(songData.media);
+				const mediaEntries = await Promise.all(
+					songData.media.map(async (url): Promise<MediaEntry | null> => {
+						const media = await fetch(`/api/media/${url}`);
+						const json = await media.json();
+						if (!json) return null;
+						return json as MediaEntry;
+					})
+				);
+
+				setMedia(mediaEntries.filter((m): m is MediaEntry => m !== null));
 			}
 		})()
-	})
+	}, [songId])
 
 	const searchArtists = useCallback(async (query: string): Promise<string[]> => {
 		const response = await fetch(
-			`/api/search/artists${query ? `?query=${encodeURIComponent(query)}` : "?"+crypto.randomUUID()}`
+			`/api/search/artists${query ? `?query=${encodeURIComponent(query)}` : ""}`
 		);
 
 		if (!response.ok) return [];
@@ -78,35 +89,28 @@ export default function SongEdit({ songId }: SongEditProps) {
 			value={featuredArtists}
 			onChange={(e) => setFeaturedArtists(e.target.value)}
 		/>
-		<div className="panel-row">
-			<div className="panel-column">
-				<label>Tags</label>
-				<input
-					type="text"
-					value={tags}
-					onChange={(e) => setTags(e.target.value)}
-				/>
-			</div>
-			<div className="panel-column">
-				<label>Genre</label>
-				<DropDown
-					items={Object.values(Genre)}
-					value={genres}
-					onChange={(e) => setGenres(e.target.value)}
-				/>
-			</div>
-			<div className="panel-column">
-				<label>Release Date</label>
-				<input 
-					type="date" 
-					className="h-full" 
-					value={releaseDate ?? ""} 
-					onChange={(e) => setReleaseDate(e.target.value)}
-				/>
-			</div>
+		<label>Tags</label>
+		<input
+			type="text"
+			value={tags}
+			onChange={(e) => setTags(e.target.value)}
+		/>
+		<label>Genre</label>
+		<DropDown
+			items={Object.values(Genre)}
+			value={genres}
+			onChange={(e) => setGenres(e.target.value)}
+		/>
+		<label>Release Date</label>
+		<input 
+			type="date" 
+			className="h-full" 
+			value={releaseDate ?? ""} 
+			onChange={(e) => setReleaseDate(e.target.value)}
+		/>
+		<div className="flex flex-row">
+			<label>Media</label>&nbsp;<label style={{color: "var(--foreground-2)"}}>(Covers, Audio, Videos, etc)</label>
 		</div>
-
-		<label>Media</label>
 		<MediaEdit mediaDispatch={[media, setMedia]} />
 
         <button type="submit" className="w-full" disabled={busy}>{busy ? "saving entry…" : (songId ? `edit song` : `add song`)} <ArrowUpRight size={16} /></button>

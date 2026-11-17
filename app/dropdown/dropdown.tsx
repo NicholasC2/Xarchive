@@ -89,7 +89,7 @@ export default function DropDown({
                     alignItems: "center",
                     padding: "10px",
                 }}
-                onClick={() => setShowResults(previous => !previous)}
+                onMouseDown={() => {if(!showResults) setShowResults(previous => !previous)}}
             >
                 <div>{query}</div>
                 <div className="flex-1" />

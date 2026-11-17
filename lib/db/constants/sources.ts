@@ -1,8 +1,8 @@
 export const sources = [
-    "soundcloud",
-    "spotify",
-    "youtube",
-    "social media",
-    "unknown",
+    "Soundcloud",
+    "Spotify",
+    "Youtube",
+    "Social Media",
+    "Unknown",
 ] as const;
 export type AudioSource = (typeof sources)[number];
