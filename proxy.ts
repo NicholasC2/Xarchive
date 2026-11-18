@@ -17,5 +17,6 @@ export const config = {
   matcher: [
     "/logged_in",
     "/profile/edit/:path*",
+    "/contribute:path*"
   ],
 };

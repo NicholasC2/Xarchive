@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
-import { showError } from "../error";
 
 export default function SignUp() {
     const router = useRouter();

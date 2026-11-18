@@ -1,10 +1,8 @@
 "use client";
 
 import ProfilePhoto from "@/app/peices/profile-photo";
-import ReadMore from "@/app/peices/read-more";
 import { authClient } from "@/lib/auth/client";
 import { ArrowUpRight, User } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function ProfileEditPage() {
@@ -13,17 +11,12 @@ export default function ProfileEditPage() {
 	const [bio, setBio] = useState("");
 
 	const [busy, setBusy] = useState(false);
-
-	const [session, setSession] = useState<
-		typeof authClient.$Infer.Session | null
-	>(null);
 	
 	useEffect(() => {
 		(async() => {
 			setBusy(true);
 			
 			const session = (await authClient.getSession()).data;
-			setSession(session)
 
 			const result = (await fetch("/api/profile/"+session?.user.id));
 

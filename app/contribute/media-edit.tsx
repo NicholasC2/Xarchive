@@ -12,6 +12,8 @@ import { Plus, Upload, X } from "lucide-react";
 import { MediaType, mediaTypes } from "@/lib/db/constants/mediaType";
 import DropDown from "../dropdown/dropdown";
 import { AudioSource, sources } from "@/lib/db/constants/sources";
+import { authClient } from "@/lib/auth/client";
+import { showError } from "../error";
 
 export interface MediaEntry {
     file: File | null;
@@ -28,6 +30,17 @@ interface MediaEditProps {
 
 export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     const [media, setMedia] = mediaDispatch ?? useState<MediaEntry[]>([]);
+
+    const [session, setSession] = useState<
+        typeof authClient.$Infer.Session | null
+    >(null);
+
+    useEffect(()=>{
+        (async() => {
+            const session = await authClient.getSession();
+            setSession(session.data);
+        })()
+    }, []);
 
     function getMediaType(file: File): MediaType | null {
         const mimeCategory = file.type.split("/")[0];
@@ -54,11 +67,12 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
             isNew: true,
             media: {
                 url: "",
-                name: file.name.slice(0, file.name.lastIndexOf(".")),
+                comment: "",
+                contributor: session?.user.id,
                 createdAt: new Date(),
                 format: file.name.split(".").pop() ?? "",
                 mimeType: file.type,
-                sizeBytes: file.size,
+                sizeBytes: BigInt(file.size),
                 source: "Unknown",
                 type: getMediaType(file) as MediaType,
             } as MediaFile,
@@ -66,15 +80,34 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     }
 
     function removeFile(index: number) {
+        if(media[index].media.contributor != session?.user.id) return;
+
         setMedia(previous =>
             previous.filter((m, i) => i !== index)
         );
     }
 
+    const onlyOne = [
+        "Cover front",
+        "Cover back",
+        "Banner",
+        "Thumbnail"
+    ]
+
     function updateMedia(
         index: number,
         updates: Partial<MediaFile>
     ) {
+        for (const one of onlyOne) {
+            if (
+                updates.type === one &&
+                media.some((m, i) => i !== index && m.media.type === one)
+            ) {
+                showError(`Cannot have multiple "${one}"`);
+                return;
+            }
+        }
+
         setMedia(previous =>
             previous.map((entry, i) =>
                 i === index
@@ -99,7 +132,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     ]
 
     return (
-        <div className="grid gap-2 grid-cols-2">
+        <div className="flex flex-col gap-2">
             {media.map((entry, index) => (
                 <div 
                     className="panel nosize relative" 
@@ -109,7 +142,8 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                     }} 
                     key={index}
                 >
-                    <X onClick={()=>removeFile(index)} className="cursor-pointer absolute right-[10px]" size={18} />
+                    {entry.media.contributor == session?.user.id
+                        && <X onClick={()=>removeFile(index)} className="cursor-pointer absolute right-[10px]" size={18} />}
                     <div 
                         className="flex flex-row"
                         style={{
@@ -125,11 +159,11 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                         }
                     </div>
                     <div className="">
-                        <label>Name:</label>
-                        <input 
-                            value={entry.media.name} 
+                        <label>Comment:</label>
+                        <textarea 
+                            value={entry.media.comment} 
                             onChange={e => updateMedia(index, {
-                                name: e.target.value
+                                comment: e.target.value
                             })}
                         />
                         <div className="flex-1" />

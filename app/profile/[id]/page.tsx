@@ -3,8 +3,6 @@
 import ProfilePhoto from "@/app/peices/profile-photo";
 import ReadMore from "@/app/peices/read-more";
 import { authClient } from "@/lib/auth/client";
-import { User } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 

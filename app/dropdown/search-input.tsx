@@ -54,7 +54,10 @@ export default function SearchInput({
 		}
 	}
 
-	function updateQuery(nextValue: string, event?: React.ChangeEvent<HTMLInputElement>) {
+	function updateQuery(
+		nextValue: string,
+		event?: React.ChangeEvent<HTMLInputElement>
+	) {
 		setInternalQuery(nextValue);
 		search(nextValue);
 
@@ -96,6 +99,12 @@ export default function SearchInput({
 			window.removeEventListener("resize", updatePosition);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (value !== undefined) {
+			setInternalQuery(String(value));
+		}
+	}, [value]);
 
 	return (
 		<div className="dropdown">

@@ -21,7 +21,6 @@ export default function DropDown({
     onChange,
     ...divProps
 }: DropDownProps) {
-    const [query, setQuery] = useState(value);
     const [showResults, setShowResults] = useState(false);
     const [rect, setRect] = useState<DOMRect | null>(null);
 
@@ -68,7 +67,7 @@ export default function DropDown({
     }, [showResults]);
 
     function selectItem(item: string) {
-        setQuery(item);
+        value = item;
         setShowResults(false);
 
         onChange?.({
@@ -91,7 +90,7 @@ export default function DropDown({
                 }}
                 onMouseDown={() => {if(!showResults) setShowResults(previous => !previous)}}
             >
-                <div>{query}</div>
+                <div>{value}</div>
                 <div className="flex-1" />
 
                 {showResults
@@ -118,7 +117,7 @@ export default function DropDown({
                                 key={item}
                                 title={item}
                                 role="option"
-                                aria-selected={query === item}
+                                aria-selected={value === item}
                                 onMouseDown={event => {
                                     event.preventDefault();
                                     selectItem(item);

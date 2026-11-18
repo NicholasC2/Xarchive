@@ -1,3 +1,4 @@
+
 import { sql } from "drizzle-orm";
 import {
 	pgTable,
@@ -5,22 +6,29 @@ import {
 	timestamp,
 	jsonb,
 	bigint,
+	date,
+	check,
 } from "drizzle-orm/pg-core";
 
 import { Genre } from "./constants/genre";
 import { mediaTypes } from "./constants/mediaType";
 import { sources } from "./constants/sources";
+import { user } from "@/auth-schema";
 
 export const artists = pgTable("artists", {
-	id: text("id").primaryKey(),
+	name: text("name").primaryKey(),
 
-	name: text("name").notNull(),
 	bio: text("bio").notNull().default(""),
 
 	media: jsonb("media")
 		.$type<string[]>()
 		.notNull()
 		.default(sql`'[]'::jsonb`),
+
+	contributor: text("contributor").references(
+		() => user.id,
+		{ onDelete: "set null" },
+	),
 
 	createdAt: timestamp("created_at", {
 		withTimezone: true,
@@ -48,7 +56,14 @@ export const albums = pgTable("albums", {
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
-	releaseDate: text("release_date"),
+	contributor: text("contributor").references(
+		() => user.id,
+		{ onDelete: "set null" },
+	),
+
+	releaseDate: date("release_date", {
+		mode: "string",
+	}),
 
 	createdAt: timestamp("created_at", {
 		withTimezone: true,
@@ -86,43 +101,67 @@ export const songs = pgTable("songs", {
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
-	releaseDate: text("release_date"),
+	contributor: text("contributor").references(
+		() => user.id,
+		{ onDelete: "set null" },
+	),
+
+	releaseDate: date("release_date", {
+		mode: "string",
+	}),
 
 	createdAt: timestamp("created_at", {
 		withTimezone: true,
 	}).notNull().defaultNow(),
 });
 
-export const mediaFiles = pgTable("media_files", {
-	url: text("url").primaryKey(),
+export const mediaFiles = pgTable(
+	"media_files",
+	{
+		url: text("url").primaryKey(),
 
-	name: text("name").notNull(),
+		comment: text("comment").notNull(),
 
-	type: text("type", {
-		enum: mediaTypes,
-	}).notNull(),
+		contributor: text("contributor").references(
+			() => user.id,
+			{ onDelete: "set null" },
+		),
 
-	source: text("source", {
-		enum: sources,
-	}).notNull(),
+		type: text("type", {
+			enum: mediaTypes,
+		}).notNull(),
 
-	mimeType: text("mime_type"),
-	format: text("format"),
-	sizeBytes: bigint("size_bytes", {mode: "number"}), // mb
+		source: text("source", {
+			enum: sources,
+		}).notNull(),
 
-	createdAt: timestamp("created_at", {
-		withTimezone: true,
-	}).notNull().defaultNow(),
-});
+		mimeType: text("mime_type"),
+		format: text("format"),
+
+		sizeBytes: bigint("size_bytes", {
+			mode: "bigint",
+		}),
+
+		createdAt: timestamp("created_at", {
+			withTimezone: true,
+		}).notNull().defaultNow(),
+	},
+	(table) => [
+		check(
+			"media_files_size_nonnegative",
+			sql`${table.sizeBytes} IS NULL OR ${table.sizeBytes} >= 0`,
+		),
+	],
+);
 
 export type Artist = typeof artists.$inferSelect;
 export type NewArtist = typeof artists.$inferInsert;
-
-export type MediaFile = typeof mediaFiles.$inferSelect;
-export type NewMediaFile = typeof mediaFiles.$inferInsert;
 
 export type Album = typeof albums.$inferSelect;
 export type NewAlbum = typeof albums.$inferInsert;
 
 export type Song = typeof songs.$inferSelect;
 export type NewSong = typeof songs.$inferInsert;
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type NewMediaFile = typeof mediaFiles.$inferInsert;

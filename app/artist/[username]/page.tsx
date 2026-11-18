@@ -5,44 +5,44 @@ import { useParams } from "next/navigation";
 import NotFound from "@/app/not-found";
 
 export default function ArtistPage() {
-  const { username } = useParams<{ username: string }>();
-  const [artist, setArtist] = useState<any>(null);
-  const [notFound, setNotFound] = useState(false);
+	const { username } = useParams<{ username: string }>();
+	const [artist, setArtist] = useState<any>(null);
+	const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
+	useEffect(() => {
+		const controller = new AbortController();
 
-    async function loadArtist() {
-      try {
-        const response = await fetch(
-          `/api/artist/${encodeURIComponent(username)}`,
-          { signal: controller.signal }
-        );
+		async function loadArtist() {
+			try {
+				const response = await fetch(
+					`/api/artist/${encodeURIComponent(username)}`,
+					{ signal: controller.signal }
+				);
 
-        if (response.status === 404) {
-          setNotFound(true);
-          return;
-        }
+				if (response.status === 404) {
+					setNotFound(true);
+					return;
+				}
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch artist");
-        }
+				if (!response.ok) {
+					throw new Error("Failed to fetch artist");
+				}
 
-        setArtist(await response.json());
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error(error);
-        }
-      }
-    }
+				setArtist(await response.json());
+			} catch (error) {
+				if (!controller.signal.aborted) {
+					console.error(error);
+				}
+			}
+		}
 
-    loadArtist();
+		loadArtist();
 
-    return () => controller.abort();
-  }, [username]);
+		return () => controller.abort();
+	}, [username]);
 
-  if (notFound) return <NotFound />;
-  if (!artist) return <></>;
+	if (notFound) return <NotFound />;
+	if (!artist) return <></>;
 
-  return <div>{artist.name}</div>;
+	return <div>{artist.name}</div>;
 }
