@@ -1,9 +1,7 @@
 import { db } from "@/lib/db"
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
-    const url = request.nextUrl.searchParams.get("url")?.trim() ?? "";
-
+export async function GET(request: NextRequest, {url}: {url: string}) {
     const media = await db.query.mediaFiles.findFirst({
         where: (media, {eq}) => eq(media.url, url)
     }).execute();

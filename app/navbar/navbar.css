@@ -23,7 +23,6 @@
 }
 
 .brand {
-    flex: 0 0 auto;
     font-size: 14px;
     font-weight: 800;
 }
@@ -43,7 +42,7 @@
 
 .nav-links a:hover,
 .nav-account a:hover {
-    color: white;
+    color: var(--foreground-1);
 }
 
 .nav-spacer {
@@ -58,30 +57,38 @@
     min-height: 34px;
     padding: 0 13px;
     background: var(--accent);
-    color: white;
+    color: var(--foreground-1);
     font-weight: 700;
 }
 
 .nav-search {
-    display: flex;
-    flex-direction: row;
+    padding: 7px;
+    height: 28px;
+    min-height: 0;
 
-    min-width: 0;
     border: 0;
-    border-bottom: 1px solid #666660;
+    border-bottom: 1px solid var(--foreground-3);
+
     background: transparent;
-    color: white;
+    color: var(--foreground-1);
+
     font-size: 13px;
+    transition: border 100ms ease-in-out;
+}
+
+.nav-search:focus-visible {
+    outline: none;
+    border-bottom: 1px solid var(--accent);
 }
 
 .nav-search::placeholder {
-    color: #a4a49e;
+    color: var(--foreground-2);
 }
 
 .nav-search-toggle {
     padding: 0;
     background: transparent;
-    color: #ddd;
+    color: var(--foreground-1);
 }
 
 .nav-account .logout-button {
@@ -92,12 +99,12 @@
     padding: 0;
     border: 0;
     background: transparent;
-    color: #aaa;
+    color: var(--foreground-1);
     cursor: pointer;
     font-size: 12px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .nav-links,
     .nav-account {
         flex-direction: column;

@@ -1,8 +1,5 @@
 .drop-input {
 	width: 100%;
-    min-height: 42px;
-
-	border: 1px solid var(--line);
 	
     background: var(--background-1);
     color: var(--foreground-1);

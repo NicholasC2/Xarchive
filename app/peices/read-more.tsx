@@ -16,7 +16,11 @@ export default function ReadMore({
     const isTruncated = text.length > maxChars;
 
     return (
-        <div {...props}>
+        <div {...props} style={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            ...props.style
+        }}>
             {readMore || !isTruncated
                 ? text
                 : text.slice(0, maxChars).trimEnd() + "..."}
@@ -28,7 +32,7 @@ export default function ReadMore({
                         style={{
                             color: "var(--foreground-3)",
                             cursor: "pointer",
-                            whiteSpace: "nowrap",
+                            whiteSpace: "nowrap"
                         }}
                         onClick={() => setReadMore(prev => !prev)}
                     >

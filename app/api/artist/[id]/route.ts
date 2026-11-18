@@ -1,9 +1,7 @@
 import { db } from "@/lib/db"
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
-    const id = request.nextUrl.searchParams.get("id")?.trim() ?? "";
-
+export async function GET(request: NextRequest, {id}: {id: string}) {
 	const artist = await db.query.artists.findFirst({
 		where: (artist, {eq}) => eq(artist.id, id)
 	}).execute();

@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
+import { showError } from "../error";
 
 export default function SignUp() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
+    const [config, setConfig] = useState({
+        googleEnabled: false
+    });
+
+    useEffect(()=>{
+        (async ()=>{
+            setConfig(await (await fetch("/api/config/")).json());
+        })()
+    }, []);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -33,12 +43,23 @@ export default function SignUp() {
 
         setBusy(true);
         try {
-            const { error } = await authClient.signUp.email({
+            const { error, data } = await authClient.signUp.email({
                 email,
                 password,
                 name: username,
             });
-            if (error) throw new Error(error.message || "Could not create your account.");
+            if (error || !data.token) {
+                setError(error?.message ?? "Could not create your account.");
+                setBusy(false);
+                return;
+            }
+
+            authClient.verifyEmail({
+                query: {
+                    token: data.token
+                }
+            })
+
             router.replace("/");
             router.refresh();
         } catch (reason) {
@@ -47,7 +68,7 @@ export default function SignUp() {
         }
     }
 
-    async function handleOauth(e: MouseEvent, provider: string) {
+    async function handleOauth(e: Event, provider: string) {
         e.preventDefault();
 
         await authClient.signIn.social({
@@ -70,7 +91,12 @@ export default function SignUp() {
             {error && <p className="panel-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
             <div className="oauth">
-                <button onClick={(e) => handleOauth(e as any, "google")}><SiGoogle /></button>
+                <button 
+                    onClick={e => handleOauth(e as any, "google")}
+                    disabled={!config.googleEnabled}
+                >
+                    <SiGoogle />
+                </button>
             </div>
             <p className="panel-switch">Already have an account? <Link href="/login">Log in</Link></p>
         </form>

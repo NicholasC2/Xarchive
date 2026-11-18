@@ -81,7 +81,7 @@ export default function DropDown({
             <div
                 ref={divRef}
                 className={
-                    "drop-input cursor-pointer flex flex-row " +
+                    "drop-input cursor-pointer flex flex-row input " +
                     (divProps.className ?? "")
                 }
                 style={{

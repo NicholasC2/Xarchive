@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const results = await db.query.artists.findMany({
         where: ilike(artists.name, `%${query}%`),
         limit: 20,
-    });
+    }).execute();
 
     return NextResponse.json(results);
 }

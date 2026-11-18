@@ -41,7 +41,7 @@ export default async function RootLayout({
 				<Navbar user={session?.user ?? null} />
 				{children}
 				<footer className="flex items-center gap-x-[8px] gap-y-[22px] mt-auto p-[18px] text-[10px]" style={{borderTop: "1px solid var(--line)"}}>
-					<p>Cool archive site</p>
+					<p>idk what to put here</p>
 				</footer>
 
 				<ErrorProvider />

@@ -88,6 +88,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 			autoComplete="song-name" 
 			value={featuredArtists}
 			onChange={(e) => setFeaturedArtists(e.target.value)}
+			searchable={searchArtists}
 		/>
 		<label>Tags</label>
 		<input

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
@@ -10,6 +10,15 @@ export default function Login() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
+    const [config, setConfig] = useState({
+        googleEnabled: false
+    });
+
+    useEffect(()=>{
+        (async ()=>{
+            setConfig(await (await fetch("/api/config/")).json());
+        })()
+    }, []);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -51,7 +60,12 @@ export default function Login() {
             {error && <p className="panel-error" role="alert">{error}</p>}
             <button type="submit" disabled={busy}>{busy ? "Signing in…" : "Log in"}</button>
             <div className="oauth">
-                <button onClick={(e) => handleOauth(e as any, "google")}><SiGoogle /></button>
+                <button 
+                    onClick={e => handleOauth(e as any, "google")}
+                    disabled={!config.googleEnabled}
+                >
+                    <SiGoogle />
+                </button>
             </div>
             <p className="panel-switch">New here? <Link href="/sign-up">Create an account</Link></p>
         </form>
