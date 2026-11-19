@@ -32,7 +32,13 @@ export const auth = betterAuth({
 				type: "string",
 				required: false,
 				unique: false,
-			}
+			},
+
+            badges: {
+                type: "string[]",
+                required: false,
+                defaultValue: [],
+            }
 		}
 	},
 

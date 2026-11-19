@@ -1,12 +1,11 @@
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import "./panel.css"
-import Navbar from "./navbar/navbar";
 import { auth } from "@/lib/auth/server";
 import ErrorProvider from "./error";
+import Navbar from "./navbar";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -38,8 +37,10 @@ export default async function RootLayout({
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
 		>
 			<body className="min-h-full flex flex-col">
-				<Navbar user={session?.user ?? null} />
+				<Navbar user={session?.user} />
+
 				{children}
+
 				<footer className="flex items-center gap-x-[8px] gap-y-[22px] mt-auto p-[18px] text-[10px]" style={{borderTop: "1px solid var(--line)"}}>
 					<p>idk what to put here</p>
 				</footer>

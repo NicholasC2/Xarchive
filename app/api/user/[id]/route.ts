@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { badges, db } from "@/lib/db";
+import { ilike, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, {params}: {params: Promise<{ id: string }>}) {
@@ -9,11 +10,16 @@ export async function GET(request: NextRequest, {params}: {params: Promise<{ id:
     }).execute();
 
     if(result) {
+        const userBadges = await db.query.badges.findMany({
+            where: inArray(badges.id, result.badges ?? []),
+        }).execute()
+
         return NextResponse.json({
             name: result.name,
             image: result.image,
             createdAt: result.createdAt,
-            bio: result.bio
+            bio: result.bio,
+            badges: userBadges
         });
     } else {
 		return Response.json({error: "profile not found"}, {

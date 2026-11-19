@@ -14,6 +14,7 @@ import { Genre } from "./constants/genre";
 import { mediaTypes } from "./constants/mediaType";
 import { sources } from "./constants/sources";
 import { user } from "@/auth-schema";
+import { TextColor } from "@/app/peices/text-color";
 
 export const artists = pgTable("artists", {
 	name: text("name").primaryKey(),
@@ -153,6 +154,26 @@ export const mediaFiles = pgTable(
 		),
 	],
 );
+
+export const badges = pgTable("badges", {
+    id: text("id").primaryKey(),
+
+    name: text("name").notNull(),
+    icon: text("icon").notNull(),
+    acquireBy: text("acquire_by").notNull(),
+
+    textColor: jsonb("text_color")
+        .$type<TextColor>()
+        .notNull()
+        .default(sql`'{}'::jsonb`),
+
+    createdAt: timestamp("created_at", {
+        withTimezone: true,
+    }).notNull().defaultNow(),
+});
+
+export type Badge = typeof badges.$inferSelect;
+export type NewBadge = typeof badges.$inferInsert;
 
 export type Artist = typeof artists.$inferSelect;
 export type NewArtist = typeof artists.$inferInsert;

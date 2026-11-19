@@ -195,6 +195,118 @@ textarea:focus-visible {
     color: white;
 }
 
+.navbar {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    display: flex;
+    min-height: 62px;
+    align-items: center;
+    padding: 0 clamp(18px, 5vw, 72px);
+    border-bottom: 1px solid var(--line);
+    background: var(--background-1);
+    color: var(--foreground-1);
+
+    gap: 22px;
+    font-size: 13px;
+}
+
+.navbar a {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--foreground-2);
+    transition: color 120ms ease;
+    text-wrap: nowrap;
+}
+
+.navbar a:hover {
+    color: var(--foreground-1);
+}
+
+.navbar-toggle {
+    display: none;
+}
+
+.brand {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.nav-account {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.nav-account .nav-signup {
+    min-height: 34px;
+    padding: 0 13px;
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+}
+
+.nav-search {
+    flex: 1;
+
+    padding: 7px;
+    height: 28px;
+    width: 50px;
+    min-height: 0;
+    min-width: 0;
+
+    border: 0;
+    border-bottom: 1px solid var(--foreground-3);
+
+    background: transparent;
+    color: var(--foreground-1);
+
+    font-size: 13px;
+    transition: border 100ms ease-in-out;
+}
+
+.nav-search:focus-visible {
+    outline: none;
+    border-bottom: 1px solid var(--accent);
+}
+
+.loading {
+    background: linear-gradient(
+        90deg,
+        var(--foreground-1) 25%,
+        var(--foreground-3) 50%,
+        var(--foreground-1) 75%
+    );
+    background-size: 200% 100%;
+    opacity: 10%;
+    border-radius: 4px;
+
+    animation: shimmer 3s infinite linear;
+}
+
+.loading-spinner {
+    animation: spin 500ms infinite linear;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
 .archive-page {
     display: flex;
     flex-direction: row;
@@ -204,10 +316,51 @@ textarea:focus-visible {
     overflow: auto;
     width: min(100% - 40px, 1040px);
     margin: 0 auto;
-    padding: 30px 0 66px;
+    padding: 30px 0;
 }
 
 @media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: start;
+        position: fixed;
+        height: 100%;
+        padding: clamp(18px, 5vw, 72px);
+        left: 0;
+        top: 0;
+
+        border-bottom: none;
+        z-index: 100;
+    }
+
+    .navbar-toggle {
+        display: initial;
+        border-right: 1px solid var(--line);
+        position: absolute;
+        top: 0;
+        left: 100%;
+        height: 100%;
+        background: var(--background-1);
+        padding: 15px;
+    }
+
+    .navbar.closed {
+        transform: translateX(-100%);
+    }
+
+    body:has(.navbar:not(.closed))::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.15);
+        z-index: 99;
+        pointer-events: none;
+    }
+
+    body {
+        padding-left: 48px;
+    }
+
     .archive-page {
         flex-direction: column-reverse;
     }
