@@ -20,7 +20,7 @@ export function showError(message: string, color: ErrorColor = "fail") {
         new CustomEvent<Error>("app-error", {
             detail: {
                 message: message, 
-                color: "fail",
+                color: color,
                 id: crypto.randomUUID(),
                 removing: false
             }

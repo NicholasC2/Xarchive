@@ -286,15 +286,15 @@ textarea:focus-visible {
 }
 
 .loading-spinner {
-    animation: spin 500ms infinite linear;
+    animation: spin 1s infinite linear;
 }
 
 @keyframes spin {
     0% {
-        transform: rotate(0);
+        rotate: 0deg;
     }
     100% {
-        transform: rotate(360deg);
+        rotate: 360deg;
     }
 }
 

@@ -1,9 +1,9 @@
 import { db } from "@/lib/db"
 import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest, {id}: {id: string}) {
+export async function GET(request: NextRequest, {name}: {name: string}) {
 	const artist = await db.query.artists.findFirst({
-		where: (artist, {eq}) => eq(artist.id, id)
+		where: (artist, {eq}) => eq(artist.name, name)
 	}).execute();
 
 	if(artist) {

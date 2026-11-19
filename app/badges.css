@@ -1,0 +1,26 @@
+.badge-color-red {
+    color: red;
+    -webkit-text-stroke: rgb(255, 132, 132) 1px;
+    font-weight: 1000;
+
+    animation: badge-color-red 2s infinite ease-in-out;
+}
+
+@keyframes badge-color-red {
+    0% {
+        color: red;
+    }
+    50% {
+        color: rgb(255, 142, 142);
+    }
+    100% {
+        color: red;
+    }
+}
+
+.badge-color-goat {
+    color: rgb(192, 182, 163);
+    -webkit-text-stroke: rgb(163, 123, 77) 1px;
+    text-shadow: 0 0 4px gold;
+    font-weight: 1000;
+}

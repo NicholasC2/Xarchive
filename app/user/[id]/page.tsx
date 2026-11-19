@@ -44,7 +44,7 @@ export default function UserPage({params}: {params: Promise<{ id: string }>}) {
 	 ? (
 		<div className="archive-page gap-5 flex-1">
 			<div className="flex flex-col flex-1">
-				<label>Contributions:</label>
+				{/* <div className="loading h-full" /> */}
 			</div>
 			<div style={{
 				border: "1px solid var(--line)"
@@ -53,7 +53,7 @@ export default function UserPage({params}: {params: Promise<{ id: string }>}) {
 				minWidth: "300px"
 			}}>
 				<Profile name={name} image={image} badges={badges} />
-				{bio != false
+				{typeof bio == "string"
 				 ? <ReadMore maxChars={50} text={bio ?? ""} />
 				 : <div className="loading h-[5rem]" />}
 			</div>
