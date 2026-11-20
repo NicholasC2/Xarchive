@@ -30,8 +30,8 @@ export default function SignUp() {
         const confirmPassword = String(data.get("confirmPassword") ?? "");
         const username = String(data.get("username") ?? "");
 
-        if (password.length < 8) {
-            setError("Password must be at least 8 characters");
+        if (username.length < 2) {
+            setError("Display name must be atleast 2 characters");
             return;
         }
 

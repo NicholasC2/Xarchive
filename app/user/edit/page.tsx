@@ -89,17 +89,20 @@ export default function ProfileEditPage() {
 	async function updateProfileInfo() {
 		setBusy("updating profile");
 
-		const result = await fetch(`/api/user/${session?.user.id}`, {
-			method: "POST",
-			body: JSON.stringify({
-				name,
-				bio,
-				badges
-			})
+		if(typeof name != "string" || !Array.isArray(badges) || typeof bio != "string") {
+			setBusy(false);
+			return;
+		};
+
+		const result = await authClient.updateUser({
+			name: name,
+			badgeOrder: badges.map(b => b.id),
+			bio: bio
 		})
 
-		if(!result.ok) {
-			showError((await result.json()).message ?? "Unknown Error")
+		if(result.error) {
+			setBusy(false);
+			showError(result.error.message ?? "Unknown Error")
 		} else {
 			showError("Info Updated", "success");
 			setTimeout(()=>router.replace(`/user/${session?.user.id}`), 500)

@@ -1,7 +1,9 @@
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
+import { z } from "zod";
 import * as schema from "@/auth-schema";
+import { admin } from "better-auth/plugins";
 
 export const googleEnabled = Boolean(
     process.env.GOOGLE_CLIENT_ID &&
@@ -24,6 +26,44 @@ export const auth = betterAuth({
 
     emailAndPassword: {
         enabled: true,
+        minPasswordLength: 8,
+    },
+
+    plugins: [
+        admin({
+            adminRoles: ["admin"]
+        })
+    ],
+
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (user) => {
+                    if (!user.name || user.name.trim().length < 2) {
+                        throw new APIError("BAD_REQUEST", {
+                            message: "Name must be at least 2 characters",
+                        });
+                    }
+
+                    return { data: user };
+                },
+            },
+
+            update: {
+                before: async (user) => {
+                    if (
+                        user.name !== undefined &&
+                        user.name.trim().length < 2
+                    ) {
+                        throw new APIError("BAD_REQUEST", {
+                            message: "Name must be at least 2 characters",
+                        });
+                    }
+
+                    return { data: user };
+                },
+            },
+        },
     },
 
 	user: {
@@ -32,13 +72,25 @@ export const auth = betterAuth({
 				type: "string",
 				required: false,
 				unique: false,
+                input: true,
 			},
 
             badges: {
                 type: "string[]",
                 required: false,
                 defaultValue: [],
-            }
+                input: false,
+            },
+
+            badgeOrder: {
+                type: "string[]",
+                required: false,
+                defaultValue: [],
+                input: true,
+                validator: {
+                    input: z.array(z.string()),
+                },
+            },
 		}
 	},
 
