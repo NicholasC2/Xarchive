@@ -3,12 +3,10 @@
 import {
     Dispatch,
     SetStateAction,
-    useEffect,
     useState,
 } from "react";
 
-import { MediaFile } from "@/lib/db/schema";
-import { Plus, Upload, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { MediaType, mediaTypes } from "@/lib/db/constants/mediaType";
 import DropDown from "../dropdown/dropdown";
 import { AudioSource, sources } from "@/lib/db/constants/sources";
@@ -16,9 +14,12 @@ import { authClient } from "@/lib/auth/client";
 import { showError } from "../error";
 
 export interface MediaEntry {
-    file: File | null;
-    media: MediaFile;
+    file: File | string | null;
     isNew: boolean;
+    comment: string;
+    mediaType: MediaType;
+    source: AudioSource;
+    contributor: string;
 }
 
 interface MediaEditProps {
@@ -31,16 +32,7 @@ interface MediaEditProps {
 export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     const [media, setMedia] = mediaDispatch ?? useState<MediaEntry[]>([]);
 
-    const [session, setSession] = useState<
-        typeof authClient.$Infer.Session | null
-    >(null);
-
-    useEffect(()=>{
-        (async() => {
-            const session = await authClient.getSession();
-            setSession(session.data);
-        })()
-    }, []);
+    const { data: session } = authClient.useSession();
 
     function getMediaType(file: File): MediaType | null {
         const mimeCategory = file.type.split("/")[0];
@@ -62,25 +54,23 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
 
         if (!mediaTypes.includes(getMediaType(file) as MediaType)) return;
 
-        setMedia(previous => [...previous, {
-            file,
-            isNew: true,
-            media: {
-                url: "",
+        if(!session) return;
+
+        setMedia(previous => [
+            ...previous,
+            {
                 comment: "",
-                contributor: session?.user.id,
-                createdAt: new Date(),
-                format: file.name.split(".").pop() ?? "",
-                mimeType: file.type,
-                sizeBytes: BigInt(file.size),
-                source: "Unknown",
-                type: getMediaType(file) as MediaType,
-            } as MediaFile,
-        }]);
+                contributor: session.user.id,
+                file: file,
+                isNew: true,
+                mediaType: getMediaType(file) as MediaType,
+                source: "Unknown"
+            }
+        ]);
     }
 
     function removeFile(index: number) {
-        if(media[index].media.contributor != session?.user.id) return;
+        if(media[index].contributor != session?.user.id) return;
 
         setMedia(previous =>
             previous.filter((m, i) => i !== index)
@@ -96,12 +86,12 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
 
     function updateMedia(
         index: number,
-        updates: Partial<MediaFile>
+        updates: Partial<MediaEntry>
     ) {
         for (const one of onlyOne) {
             if (
-                updates.type === one &&
-                media.some((m, i) => i !== index && m.media.type === one)
+                updates.mediaType === one &&
+                media.some((m, i) => i !== index && m.mediaType === one)
             ) {
                 showError(`Cannot have multiple "${one}"`);
                 return;
@@ -113,10 +103,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                 i === index
                     ? {
                         ...entry,
-                        media: {
-                            ...entry.media,
-                            ...updates,
-                        },
+                        ...updates,
                     }
                     : entry
             )
@@ -142,26 +129,28 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                     }} 
                     key={index}
                 >
-                    {entry.media.contributor == session?.user.id
+                    {entry.contributor == session?.user.id
                         && <X onClick={()=>removeFile(index)} className="cursor-pointer absolute right-[10px]" size={18} />}
                     <div 
                         className="flex flex-row"
                         style={{
                             alignItems: "center",
-                            gap: "5px"
+                            gap: "5px",
+                            overflowX: "auto",
+                            maxWidth: "95%",
+                            textWrap: "nowrap"
                         }}
                     >
-                        <div className="font-[650] text-[11px]">URL:</div>
                         {
-                            entry.isNew
-                            ? <div>Not Uploaded</div>
-                            : <a href={entry.media.url}>{entry.media.url}</a>
+                            typeof entry.file != "string"
+                            ? <div>{entry.file?.name} (Not Uploaded)</div>
+                            : <a href={entry.file}>{entry.file}</a>
                         }
                     </div>
                     <div className="">
                         <label>Comment:</label>
                         <textarea 
-                            value={entry.media.comment} 
+                            value={entry.comment} 
                             onChange={e => updateMedia(index, {
                                 comment: e.target.value
                             })}
@@ -169,22 +158,22 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                         <div className="flex-1" />
                     </div>
 
-                    {imageTypes.includes(entry.media.type) && <div>
+                    {imageTypes.includes(entry.mediaType) && <div>
                         <label>Image Type:</label>
                         <DropDown
                             items={imageTypes}
-                            value={entry.media.type}
+                            value={entry.mediaType}
                             onChange={e => updateMedia(index, {
-                                type: e.target.value as MediaType
+                                mediaType: e.target.value as MediaType
                             })}
                         />
                     </div>}
 
-                    {entry.media.type == "Audio" && <div>
+                    {entry.mediaType == "Audio" && <div>
                         <label>Audio Source:</label>
                         <DropDown
                             items={sources.values().toArray()}
-                            value={entry.media.source}
+                            value={entry.source}
                             onChange={e => updateMedia(index, {
                                 source: e.target.value as AudioSource
                             })}

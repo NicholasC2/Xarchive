@@ -1,9 +1,12 @@
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "../db";
+import { badges, db } from "../db";
 import { z } from "zod";
 import * as schema from "@/auth-schema";
-import { admin } from "better-auth/plugins";
+import { admin, customSession } from "better-auth/plugins";
+import { inArray } from "drizzle-orm";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { bucket, bucketName } from "../r2";
 
 export const googleEnabled = Boolean(
     process.env.GOOGLE_CLIENT_ID &&
@@ -32,7 +35,7 @@ export const auth = betterAuth({
     plugins: [
         admin({
             adminRoles: ["admin"]
-        })
+        }),
     ],
 
     databaseHooks: {
@@ -67,6 +70,18 @@ export const auth = betterAuth({
     },
 
 	user: {
+        deleteUser: {
+            enabled: true,
+            async afterDelete(user, request) {
+                await bucket.send(
+                    new DeleteObjectCommand({
+                        Key: `pfp/${user.id}`,
+                        Bucket: bucketName
+                    })
+                )
+            },
+        },
+
 		additionalFields: {
 			bio: {
 				type: "string",

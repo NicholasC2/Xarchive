@@ -13,15 +13,19 @@ interface TextColorProps {
 }
 
 export default function TextColored({ textColor, text, style, className }: TextColorProps ) {
-    return <div className="colored-text flex flex-row">
+    return <div 
+            className={"colored-text flex flex-row " + className}
+            style={{
+                ...style
+            }}
+        >
         {text.split("").map((c, i) => (
             <div
                 key={i}
-                className={textColor.className + " " + className}
+                className={textColor.className}
                 style={{
                     animationDelay: i * 100 + "ms",
                     ...textColor.css,
-                    ...style
                 }}
             >{c}</div>
         ))}

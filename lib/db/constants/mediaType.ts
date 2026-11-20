@@ -8,6 +8,7 @@ export const mediaTypes = [
 
 	"Banner",      // artist/album banner
 	"Thumbnail",   // artist pfp, etc
+	"None",
 ] as const;
 
 export type MediaType = (typeof mediaTypes)[number];

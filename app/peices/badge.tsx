@@ -2,11 +2,16 @@
 
 import { type Badge } from "@/lib/db";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { HtmlHTMLAttributes, useState } from "react";
 import { createPortal } from "react-dom";
 import ColorText from "./text-color";
 
-export default function BadgeDisplay({ badge }: { badge: Badge }) {
+interface BadgeDisplayProps extends HtmlHTMLAttributes<HTMLImageElement> {
+    badge: Badge,
+    hoverText?: boolean
+}
+
+export default function BadgeDisplay({ badge, hoverText = true, ...props }: BadgeDisplayProps) {
     const [hovering, setHovering] = useState(false);
     const [rect, setRect] = useState<DOMRect | null>(null);
 
@@ -18,16 +23,17 @@ export default function BadgeDisplay({ badge }: { badge: Badge }) {
     return (
         <>
             <Image
+                {...props}
                 src={badge.icon}
                 width={32}
                 height={32}
-                className="shrink-1 w-auto h-auto min-h-0 min-w-0 max-h-full cursor-pointer"
+                className={"shrink-1 w-auto h-auto min-h-0 min-w-0 max-h-full " + (hoverText ? "cursor-pointer " : "") + props.className}
                 alt={badge.name + " badge icon"}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={() => setHovering(false)}
             />
 
-            {hovering && rect && createPortal(
+            {hovering && hoverText && rect && createPortal(
                 <div
                     className="fixed z-50 flex flex-col"
                     style={{

@@ -6,7 +6,7 @@ import BadgeDisplay from "./badge";
 import TextColored from "./text-color";
 
 interface ProfileProps {
-    image: string | false;
+    image: string | false | File | null;
     name: string | false;
     badges: Badge[] | false;
 }
@@ -14,9 +14,7 @@ interface ProfileProps {
 export default function Profile({ image, name, badges }: ProfileProps) {
     return (
         <div className="grid grid-cols-[auto_1fr] gap-5 items-stretch">
-            {typeof image == "string"
-             ? <ProfilePhoto image={image} />
-             : <ProfilePhoto loading={true} />}
+            <ProfilePhoto image={image} />
 
             <div className="flex flex-col min-w-0 max-h-[50px]">
                 {typeof name == "string"

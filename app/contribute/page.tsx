@@ -13,7 +13,7 @@ export default function ContributionForm() {
     <main className="archive-page">
       <section className="panel">
         <h2>Contribute</h2>
-        <div className="panel-row" role="tablist" aria-label="Entry type">
+        <div className="panel-row">
           {(["song", "album", "artist"] as const).map((entryMode) => 
             <button 
               key={entryMode}

@@ -82,8 +82,8 @@ export const songs = pgTable("songs", {
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
-	genres: jsonb("genres")
-		.$type<Genre[]>()
+	genre: jsonb("genre")
+		.$type<Genre>()
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
@@ -116,45 +116,6 @@ export const songs = pgTable("songs", {
 	}).notNull().defaultNow(),
 });
 
-export const mediaFiles = pgTable(
-	"media_files",
-	{
-		url: text("url").primaryKey(),
-
-		comment: text("comment").notNull(),
-
-		contributor: text("contributor").references(
-			() => user.id,
-			{ onDelete: "set null" },
-		),
-
-		type: text("type", {
-			enum: mediaTypes,
-		}).notNull(),
-
-		source: text("source", {
-			enum: sources,
-		}).notNull(),
-
-		mimeType: text("mime_type"),
-		format: text("format"),
-
-		sizeBytes: bigint("size_bytes", {
-			mode: "bigint",
-		}),
-
-		createdAt: timestamp("created_at", {
-			withTimezone: true,
-		}).notNull().defaultNow(),
-	},
-	(table) => [
-		check(
-			"media_files_size_nonnegative",
-			sql`${table.sizeBytes} IS NULL OR ${table.sizeBytes} >= 0`,
-		),
-	],
-);
-
 export const badges = pgTable("badges", {
     id: text("id").primaryKey(),
 
@@ -183,6 +144,3 @@ export type NewAlbum = typeof albums.$inferInsert;
 
 export type Song = typeof songs.$inferSelect;
 export type NewSong = typeof songs.$inferInsert;
-
-export type MediaFile = typeof mediaFiles.$inferSelect;
-export type NewMediaFile = typeof mediaFiles.$inferInsert;

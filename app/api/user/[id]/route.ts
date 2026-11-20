@@ -1,5 +1,6 @@
-import { badges, db } from "@/lib/db";
-import { inArray } from "drizzle-orm";
+import { orderBadges } from "@/app/peices/orderBadges";
+import { albums, artists, badges, db, songs } from "@/lib/db";
+import { eq, inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -18,35 +19,32 @@ export async function GET(
                 where: inArray(badges.id, result.badges),
             }).execute()
             : [];
-
+        
         const badgeOrder = result.badgeOrder ?? [];
 
-        const orderedBadges = [
-            ...(result.role === "admin" ? [{
-                id: "admin",
-                name: "Administrator",
-                icon: "/badges/admin.svg",
-                acquireBy: "",
-                textColor: {
-                    className: "badge-color-red",
-                },
-            }] : []),
+        const orderedBadges = orderBadges(userBadges, badgeOrder, result.role === "admin");
 
-            ...badgeOrder
-                .map(id => userBadges.find(badge => badge.id === id))
-                .filter((badge): badge is NonNullable<typeof badge> => !!badge),
+        const contributions = [];
 
-            ...userBadges.filter(
-                badge => !badgeOrder.includes(badge.id)
-            ),
-        ];
+        contributions.push(...await db.query.artists.findMany({
+            where: eq(artists.contributor, id)
+        }).execute())
+
+        contributions.push(...await db.query.albums.findMany({
+            where: eq(albums.contributor, id)
+        }).execute())
+
+        contributions.push(...await db.query.songs.findMany({
+            where: eq(songs.contributor, id)
+        }).execute());
 
         return NextResponse.json({
             name: result.name ?? "",
             image: result.image ?? "",
             createdAt: result.createdAt,
             bio: result.bio ?? "",
-            badges: orderedBadges
+            badges: orderedBadges,
+            contributions: contributions,
         });
     } else {
         return NextResponse.json(

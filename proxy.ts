@@ -15,8 +15,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/logged_in",
-    "/profile/edit/:path*",
+    "/user/edit",
     "/contribute:path*"
   ],
 };

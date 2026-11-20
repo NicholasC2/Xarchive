@@ -1,6 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
-if(!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME) {
+if(!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME || !process.env.R2_ACCOUNT_ID) {
 	throw new Error("Missing bucket vars")
 }
 
@@ -14,3 +14,14 @@ export const bucket = new S3Client({
 });
 
 export const bucketName = process.env.R2_BUCKET_NAME;
+
+bucket.middlewareStack.add(
+    (next, context) => async (args) => {
+        return next(args);
+    },
+    {
+        name: "LoggingMiddleware",
+        step: "initialize",
+        override: true,
+    }
+);

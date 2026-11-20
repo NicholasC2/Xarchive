@@ -90,6 +90,15 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.secondary {
+    color: var(--foreground-3);
+}
+
+button.secondary {
+    color: white;
+    background: var(--line);
+}
+
 input {
 	margin: 0;
 }
@@ -179,7 +188,7 @@ button:disabled {
 }
 
 button.selected {
-    background: var(--surface-1);
+    background: var(--line);
 }
 
 button:focus-visible,

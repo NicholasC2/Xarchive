@@ -1,24 +1,19 @@
 "use client";
 
-import { ArrowLeftToLine, ArrowRightToLine, ArrowUpRight, LogOut, Search, Settings } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine, ArrowUpRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import SearchInput from "./dropdown/search-input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import type { auth } from "@/lib/auth/server";
+import ProfilePhoto from "./peices/profile-photo";
 
-type Session = typeof auth.$Infer.Session;
-type User = Session["user"];
-
-type NavbarProps = {
-    user?: User;
-};
-
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar() {
     const [panelOpen, setPanelOpen] = useState(false);
 	const router = useRouter();
 	const [query, setQuery] = useState("");
+
+    const { data: session } = authClient.useSession();
 
 	function submitSearch() {
 		router.replace(query.trim() ? `/search?q=${encodeURIComponent(query.trim())}` : "/search");
@@ -35,21 +30,25 @@ export default function Navbar({ user }: NavbarProps) {
                 <SearchInput 
                     className="nav-search" 
                     onChange={(event) => setQuery(event.target.value)} 
+                    onSubmit={()=>submitSearch()}
                     value={query} 
                     placeholder="Search archive"
                 />
 
                 <div className="flex-1" />
 
-                {user ? (
+                {session?.user ? (
                     <div className="nav-account">
-                        <Link href={`/user/${encodeURIComponent(user.id)}`}>{user.name}</Link>
+                        <div className="flex flex-row gap-2">
+                            <ProfilePhoto image={session.user.image ?? ""} style={{width:25,height: 25}} />
+                            <Link href={`/user/${encodeURIComponent(session.user.id)}`}>{session.user.name}</Link>
+                        </div>
                         <Link href="/user/edit"><Settings size={15} /></Link>
                         <a className="cursor-pointer" onClick={()=>{
-                                authClient.signOut().then(()=>{
-                                    router.replace("/");
-                                    router.refresh();
-                                });
+                            authClient.signOut().then(()=>{
+                                router.replace("/");
+                                router.refresh();
+                            });
                         }}><LogOut size={15} /></a>
                     </div>
                 ) : (
