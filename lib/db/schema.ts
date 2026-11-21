@@ -1,18 +1,13 @@
-
 import { sql } from "drizzle-orm";
 import {
 	pgTable,
 	text,
 	timestamp,
 	jsonb,
-	bigint,
 	date,
-	check,
 } from "drizzle-orm/pg-core";
 
 import { Genre } from "./constants/genre";
-import { mediaTypes } from "./constants/mediaType";
-import { sources } from "./constants/sources";
 import { user } from "@/auth-schema";
 import { TextColor } from "@/app/peices/text-color";
 

@@ -20,7 +20,7 @@ export default function SignUp() {
         })()
     }, []);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function createAccount(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError("");
 
@@ -54,7 +54,7 @@ export default function SignUp() {
             return;
         }
 
-        router.replace("/");
+        router.push("/");
     }
 
     async function handleOauth(e: Event, provider: string) {
@@ -67,7 +67,7 @@ export default function SignUp() {
     }
 
     return (
-        <form className="panel" onSubmit={handleSubmit}>
+        <form className="panel" onSubmit={createAccount}>
             <h2>Create account</h2>
             <label htmlFor="signup-name">Display name</label>
             <input id="signup-name" name="username" type="text" autoComplete="name" maxLength={50} required />

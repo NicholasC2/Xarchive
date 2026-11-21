@@ -57,7 +57,6 @@ async function getGoogleProfile(accounts: betterAuth.Account[]) {
     }>;
 }
 
-
 export default function ProfilePhoto({image, disabled = false, canEdit = false, edit = useState<string | false | File | null>(null)[1], ...props}: ProfilePhotoParams) {
     const [showImageEditPopup, setShowImageEditPopup] = useState(false);
     const [page, setPage] = useState("Upload");

@@ -11,7 +11,6 @@ import { ArrowUpRight, Trash, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { uploadFile } from "@/app/peices/uploadFile";
 import TextColored from "@/app/peices/text-color";
 import BadgeDisplay from "@/app/peices/badge";
 
@@ -104,7 +103,7 @@ export default function ProfileEditPage() {
             setDeleteConfirmError(result.error.message ?? "Failed to delete account");
             return;
         } else {
-			router.replace("/");
+			router.push("/");
 		}
 	}
 
@@ -127,7 +126,21 @@ export default function ProfileEditPage() {
 
 		if(image instanceof File) {
 			try {
-				imageUrl = "/bucket/"+await uploadFile(image, "pfp");
+				const formData = new FormData();
+				formData.append("file", image);
+
+				const response = await fetch("/api/uploadPFP", {
+					method: "POST",
+					body: formData,
+				});
+
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(data.error);
+				}
+
+				imageUrl = "/bucket/"+data.key;
 			} catch(err) {
 				showError("Failed file upload!")
 				console.error(err);
@@ -146,7 +159,7 @@ export default function ProfileEditPage() {
 			showError(result.error.message ?? "Unknown Error")
 		} else {
 			showError("Info Updated", "success");
-			setTimeout(()=>router.replace(`/user/${session.user.id}`), 500)
+			setTimeout(()=>router.push(`/user/${session.user.id}`), 500)
 		}
 
 		if(email && email != session.user.email) {

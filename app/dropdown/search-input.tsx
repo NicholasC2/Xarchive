@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import "./dropdown.css";
 import { createPortal } from "react-dom";
+import { Album, Artist, Song } from "@/lib/db";
+import Entry from "../peices/entry";
 
 interface SearchInputProps extends Omit<React.ComponentProps<"input">, "type"> {
-	searchable?: string[] | ((query: string) => Promise<string[]>);
+	searchable?: (string | Song | Album | Artist)[] | ((query: string) => Promise<(string | Song | Album | Artist)[]>);
 	maxResults?: number;
 	splitAt?: string | null;
 	clickFill?: boolean;
 	alwaysShow?: boolean;
-	onClickItem?: (text: string) => void;
+	onClickItem?: (entry: (string | Song | Album | Artist)) => void;
 }
 
 export default function SearchInput({
@@ -27,7 +29,7 @@ export default function SearchInput({
 }: SearchInputProps) {
 	const [internalQuery, setInternalQuery] = useState(String(defaultValue ?? ""));
 	const [focused, setFocused] = useState(false);
-	const [results, setResults] = useState<string[]>([]);
+	const [results, setResults] = useState<(string | Album | Artist | Song)[]>([]);
 
 	const query = value !== undefined ? String(value) : internalQuery;
 
@@ -44,7 +46,7 @@ export default function SearchInput({
 			setResults(
 				items
 					.filter(item =>
-						!currentQuery || item.toLowerCase().startsWith(currentQuery)
+						!currentQuery || (typeof item == "string" ? item : item.name).toLowerCase().startsWith(currentQuery)
 					)
 					.slice(0, maxResults)
 			);
@@ -106,6 +108,10 @@ export default function SearchInput({
 		}
 	}, [value]);
 
+	useEffect(() => {
+		search(query);
+	}, [searchable])
+
 	return (
 		<div className="dropdown">
 			<input
@@ -119,7 +125,7 @@ export default function SearchInput({
 
 					if (event.key === "Tab" && results.length > 0) {
 						event.preventDefault();
-						selectResult(results[0]);
+						selectResult(typeof results[0] == "string" ? results[0] : results[0].name);
 					}
 				}}
 				onFocus={event => {
@@ -133,7 +139,7 @@ export default function SearchInput({
 				ref={inputRef}
 			/>
 
-			{(query || (alwaysShow && focused)) && results.length > 0 && 
+			{(query || (!alwaysShow && focused)) && results.length > 0 && 
 				createPortal(
 					<ul 
 						className="drop-list"
@@ -146,16 +152,20 @@ export default function SearchInput({
 						{results.map((item, index) => (
 							<li
 								key={`${item}-${index}`}
-								title={item}
+								title={typeof item == "string" ? item : item.name}
 								role="option"
 								aria-selected="false"
 								onMouseDown={event => {
 									event.preventDefault();
-									selectResult(item);
+									if(typeof item == "string") {
+										selectResult(item);
+									}
 									onClickItem?.(item);
 								}}
 							>
-								{item}
+								{typeof item == "string"
+								? item
+								: <Entry entry={item} />}
 							</li>
 						))}
 					</ul>,

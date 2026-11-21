@@ -20,7 +20,7 @@ export default function Login() {
         })()
     }, []);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function login(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setBusy(true);
         setError("");
@@ -33,8 +33,7 @@ export default function Login() {
                 password: String(data.get("password") ?? ""),
             });
             if (error) throw new Error(error.message || "Could not sign in. Check your details and try again.");
-            router.replace("/");
-            router.refresh();
+            router.push("/");
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : "Could not sign in. Try again.");
             setBusy(false);
@@ -51,7 +50,7 @@ export default function Login() {
     }
 
     return (
-        <form className="panel" onSubmit={handleSubmit}>
+        <form className="panel" onSubmit={login}>
             <h2>Log in</h2>
             <label htmlFor="login-email">Email</label>
             <input id="login-email" name="email" type="email" autoComplete="email" required />

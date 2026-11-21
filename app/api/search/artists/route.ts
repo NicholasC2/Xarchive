@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
     const query = request.nextUrl.searchParams.get("query")?.trim();
+    const limit = Number(request.nextUrl.searchParams.get("limit"));
 
     if (!query) {
         return NextResponse.json([]);
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const results = await db.query.artists.findMany({
         where: ilike(artists.name, `%${query}%`),
-        limit: 20,
+        limit: limit ?? 20,
     }).execute();
 
     return NextResponse.json(results);

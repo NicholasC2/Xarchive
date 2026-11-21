@@ -19,7 +19,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 	const [bio, setBio] = useState("");
 	const [artists, setArtists] = useState("");
 	const [featuredArtists, setFeaturedArtists] = useState("");
-	const [genres, setGenres] = useState("");
+	const [genre, setGenre] = useState("");
 	const [tags, setTags] = useState("");
 	const [releaseDate, setReleaseDate] = useState("");
 	const [media, setMedia] = useState<MediaEntry[]>([]);
@@ -35,7 +35,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 				setBio(songData.bio);
 				setArtists(songData.artists.join(joiner));
 				setFeaturedArtists(songData.featuredArtists.join(joiner));
-				setGenres(songData.genres.join(joiner));
+				setGenre(songData.genre);
 				setTags(songData.tags.join(joiner));
 				setReleaseDate(songData.releaseDate ?? "");
 				const mediaEntries = await Promise.all(
@@ -99,8 +99,8 @@ export default function SongEdit({ songId }: SongEditProps) {
 		<label>Genre</label>
 		<DropDown
 			items={Object.values(Genre)}
-			value={genres}
-			onChange={(e) => setGenres(e.target.value)}
+			value={genre}
+			onChange={(e) => setGenre(e.target.value)}
 		/>
 		<label>Release Date</label>
 		<input 
@@ -112,7 +112,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 		<div className="flex flex-row">
 			<label>Media</label>&nbsp;<label style={{color: "var(--foreground-2)"}}>(Covers, Audio, Videos, etc)</label>
 		</div>
-		<MediaEdit mediaDispatch={[media, setMedia]} />
+		<MediaEdit mediaDispatch={[media, setMedia]} allowedTypes={["Cover", "Video", "Image", "Audio"]} />
 
         <button type="submit" className="w-full" disabled={busy}>{busy ? "saving entry…" : (songId ? `edit song` : `add song`)} <ArrowUpRight size={16} /></button>
 	</form>

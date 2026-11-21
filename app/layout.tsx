@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./badges.css";
 import "./panel.css";
 import ErrorProvider from "./error";
 import Navbar from "./navbar";

@@ -11,7 +11,6 @@ import { MediaType, mediaTypes } from "@/lib/db/constants/mediaType";
 import DropDown from "../dropdown/dropdown";
 import { AudioSource, sources } from "@/lib/db/constants/sources";
 import { authClient } from "@/lib/auth/client";
-import { showError } from "../error";
 
 export interface MediaEntry {
     file: File | string | null;
@@ -27,9 +26,18 @@ interface MediaEditProps {
         MediaEntry[],
         Dispatch<SetStateAction<MediaEntry[]>>
     ];
+    allowedTypes: readonly MediaType[];
 }
 
-export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
+const acceptedMimeTypes: Record<MediaType, string[]> = {
+    "Image": ["image/*"],
+    "Audio": ["audio/*"],
+    "Video": ["video/*"],
+    "Cover": ["image/*"],
+    "Banner": ["image/*"]
+};
+
+export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: MediaEditProps) {
     const [media, setMedia] = mediaDispatch ?? useState<MediaEntry[]>([]);
 
     const { data: session } = authClient.useSession();
@@ -39,7 +47,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
 
         switch (mimeCategory) {
             case "image":
-                return "Image";
+                return "Cover";
             case "audio":
                 return "Audio";
             case "video":
@@ -50,11 +58,12 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     }
 
     function addFile(file: File | undefined) {
-        if(!file) return;
+        if(!session || !file) return;
 
-        if (!mediaTypes.includes(getMediaType(file) as MediaType)) return;
+        const fileMediaType = getMediaType(file) as MediaType;
 
-        if(!session) return;
+        if(!fileMediaType) return;
+        if(!allowedTypes?.includes(fileMediaType)) return;
 
         setMedia(previous => [
             ...previous,
@@ -63,7 +72,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                 contributor: session.user.id,
                 file: file,
                 isNew: true,
-                mediaType: getMediaType(file) as MediaType,
+                mediaType: fileMediaType,
                 source: "Unknown"
             }
         ]);
@@ -77,27 +86,10 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
         );
     }
 
-    const onlyOne = [
-        "Cover front",
-        "Cover back",
-        "Banner",
-        "Thumbnail"
-    ]
-
     function updateMedia(
         index: number,
         updates: Partial<MediaEntry>
     ) {
-        for (const one of onlyOne) {
-            if (
-                updates.mediaType === one &&
-                media.some((m, i) => i !== index && m.mediaType === one)
-            ) {
-                showError(`Cannot have multiple "${one}"`);
-                return;
-            }
-        }
-
         setMedia(previous =>
             previous.map((entry, i) =>
                 i === index
@@ -111,10 +103,8 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
     }
 
     const imageTypes = [
-        "Cover back",
-        "Cover front",
+        "Cover",
         "Banner",
-        "Thumbnail",
         "Image"
     ]
 
@@ -161,7 +151,7 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                     {imageTypes.includes(entry.mediaType) && <div>
                         <label>Image Type:</label>
                         <DropDown
-                            items={imageTypes}
+                            items={allowedTypes.filter(m => imageTypes.includes(m))}
                             value={entry.mediaType}
                             onChange={e => updateMedia(index, {
                                 mediaType: e.target.value as MediaType
@@ -210,7 +200,11 @@ export default function MediaEdit({ mediaDispatch }: MediaEditProps) {
                     hidden
                     id="file_upload"
                     name="file_upload"
-                    accept="audio/*,image/*,video/*"
+                    accept={[
+                        ...new Set(
+                            allowedTypes.flatMap(type => acceptedMimeTypes[type])
+                        )
+                    ].join(",")}
                     onChange={e => {
                         addFile(e.target.files?.[0]);
                         e.target.value = "";
