@@ -220,7 +220,7 @@ export default function ProfilePhoto({image, disabled = false, canEdit = false, 
                             className="w-full h-full"
                             width={50}
                             height={50}
-                            priority
+                            unoptimized
                         />
                         : <User size={"75%"} />
                     )

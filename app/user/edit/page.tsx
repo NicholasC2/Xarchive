@@ -109,6 +109,8 @@ export default function ProfileEditPage() {
 	}
 
 	async function updateInfo() {
+		if(!session) return;
+
 		if(password != confirmPassword) {
 			setAccountError("Passwords dont match");
 			return;
@@ -144,10 +146,10 @@ export default function ProfileEditPage() {
 			showError(result.error.message ?? "Unknown Error")
 		} else {
 			showError("Info Updated", "success");
-			setTimeout(()=>router.replace(`/user/${session?.user.id}`), 500)
+			setTimeout(()=>router.replace(`/user/${session.user.id}`), 500)
 		}
 
-		if(email) {
+		if(email && email != session.user.email) {
 			const result = await authClient.changeEmail({
 				newEmail: email,
 			});
@@ -190,7 +192,7 @@ export default function ProfileEditPage() {
 					deleteAccount()
 				}} className="w-full flex flex-col">
 					<button type="submit">{deleteBusy != false ? deleteBusy : `delete account`}</button>
-					{deleteConfirmError && <span style={{color: "var(--error)"}}>{deleteConfirmError}</span>}
+					{deleteConfirmError && <span style={{color: "var(--fail)"}}>{deleteConfirmError}</span>}
 				</form>
 			</div>
 		</div>}
@@ -284,7 +286,7 @@ export default function ProfileEditPage() {
             <label>Confirm password</label>
             <input type="password" minLength={8} value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} autoComplete="new-password" />
 
-			{accountError && <span style={{color: "var(--error)"}}>{accountError}</span>}
+			{accountError && <span style={{color: "var(--fail)"}}>{accountError}</span>}
 		</div>
 		
 		<div className="panel">

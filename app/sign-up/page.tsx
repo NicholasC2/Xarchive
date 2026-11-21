@@ -41,30 +41,20 @@ export default function SignUp() {
         }
 
         setBusy(true);
-        try {
-            const { error, data } = await authClient.signUp.email({
-                email,
-                password,
-                name: username,
-            });
-            if (error || !data.token) {
-                setError(error?.message ?? "Could not create your account.");
-                setBusy(false);
-                return;
-            }
+        
+        const { error } = await authClient.signUp.email({
+            email,
+            password,
+            name: username,
+        });
 
-            authClient.verifyEmail({
-                query: {
-                    token: data.token
-                }
-            })
-
-            router.replace("/");
-            router.refresh();
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : "Could not create your account.");
+        if (error) {
+            setError(error.message ?? "Could not create your account.");
             setBusy(false);
+            return;
         }
+
+        router.replace("/");
     }
 
     async function handleOauth(e: Event, provider: string) {

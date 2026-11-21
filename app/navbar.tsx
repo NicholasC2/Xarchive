@@ -21,6 +21,18 @@ export default function Navbar() {
 
     return (
         <>
+            {session && !session.user.emailVerified && <div 
+                className="w-full flex flex-row" 
+                style={{
+                    background: "var(--warn)", 
+                    color: "var(--warn-bg)", 
+                    paddingLeft: "2.5%", 
+                    gap: 7
+            }}>
+                Your email is not verified
+                <Link className="flex flex-row" style={{alignItems: "center"}} href="/verify-email">Verify now <ArrowUpRight size={16} /></Link>
+            </div>}
+
             <nav className={"navbar" + (panelOpen ? "" : " closed")}>
                 <Link className="brand" href="/">Xarchive</Link>
                 <Link href="/">Home</Link>
