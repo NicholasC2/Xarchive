@@ -29,7 +29,6 @@ export async function GET(
                 contributor: result.Metadata?.contributor,
                 type: result.Metadata?.type,
                 source: result.Metadata?.source,
-                format: result.Metadata?.format,
                 mimeType: result.ContentType,
                 sizeBytes: result.ContentLength,
                 createdAt: result.LastModified,

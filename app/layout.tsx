@@ -4,6 +4,7 @@ import "./globals.css";
 import "./panel.css";
 import ErrorProvider from "./error";
 import Navbar from "./navbar";
+import { PopupProvider } from "./peices/popup";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -26,21 +27,22 @@ export default async function RootLayout({
 	children,
 }: LayoutProps<"/">) {
 	return (
-		<html
-			lang="en"
-			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-		>
-			<body className="min-h-full flex flex-col">
-				<Navbar />
+			<html
+				lang="en"
+				className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+			>
+				<body className="min-h-full flex flex-col">
+					<Navbar />
 
-				{children}
+					{children}
 
-				<footer className="flex items-center gap-x-[8px] gap-y-[22px] mt-auto p-[18px] text-[10px]" style={{borderTop: "1px solid var(--line)"}}>
-					<p>idk what to put here</p>
-				</footer>
+					<footer className="flex items-center gap-x-[8px] gap-y-[22px] mt-auto p-[18px] text-[10px]" style={{borderTop: "1px solid var(--line)"}}>
+						<p>idk what to put here</p>
+					</footer>
 
-				<ErrorProvider />
-			</body>
-		</html>
+					<PopupProvider />
+					<ErrorProvider />
+				</body>
+			</html>
 	);
 }

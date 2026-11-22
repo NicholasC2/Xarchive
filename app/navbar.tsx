@@ -3,27 +3,27 @@
 import { ArrowLeftToLine, ArrowRightToLine, ArrowUpRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import SearchInput from "./dropdown/search-input";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import ProfilePhoto from "./peices/profile-photo";
-import { Album, Artist, Song } from "@/lib/db";
 
 export default function Navbar() {
     const [panelOpen, setPanelOpen] = useState(false);
 	const router = useRouter();
 	const [query, setQuery] = useState("");
-    const [results, setResults] = useState<(Song | Artist | Album)[]>([]);
 
     const { data: session } = authClient.useSession();
 
-    useEffect(() => {
-        (async() => {
-            const results = await fetch(`/api/search?query=${query}`);
+    const searchArtists = useCallback(async (query: string): Promise<string[]> => {
+        const response = await fetch(
+            `/api/search/artists${query ? `?query=${encodeURIComponent(query)}` : ""}`
+        );
 
-            setResults(await results.json());
-        })()
-    }, [query]);
+        if (!response.ok) return [];
+
+        return response.json();
+    }, []);
 
     return (
         <>
@@ -54,7 +54,8 @@ export default function Navbar() {
                     router.push(`/search?query=${encodeURIComponent(query)}`);
                 }}>
                     <SearchInput 
-                        searchable={results}
+                        searchable={searchArtists}
+                        followLinks={true}
                         className="nav-search" 
                         onChange={(event) => setQuery(event.target.value)} 
                         onClickItem={(item) => setTimeout(()=>setQuery(""), 500)}
@@ -85,17 +86,14 @@ export default function Navbar() {
                     </div>
                 )}
 
-                <div className="navbar-toggle">
-                    <a 
-                        className="cursor-pointer"
-                        onClick={(e)=>setPanelOpen(!panelOpen)}
-                    >
-                        {panelOpen
-                        ? <ArrowLeftToLine size={18} /> 
-                        : <ArrowRightToLine size={18} />}
-                        
-                    </a>
-                </div>
+                <a 
+                    className="cursor-pointer navbar-toggle"
+                    onClick={(e)=>setPanelOpen(!panelOpen)}
+                >
+                    {panelOpen
+                    ? <ArrowLeftToLine size={18} /> 
+                    : <ArrowRightToLine size={18} />}
+                </a>
             </nav>
         </>
     )

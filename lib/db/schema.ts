@@ -10,14 +10,25 @@ import {
 import { Genre } from "./constants/genre";
 import { user } from "@/auth-schema";
 import { TextColor } from "@/app/peices/text-color";
+import { MediaType } from "./constants/mediaType";
+import { AudioSource } from "./constants/audioSources";
+
+export interface MediaEntry {
+	url: string;
+	comment: string;
+	mediaType: MediaType;
+	audioSource: AudioSource;
+	contributor: string;
+}
 
 export const artists = pgTable("artists", {
-	name: text("name").primaryKey(),
-
+	id: text("id").primaryKey(),
+	
+	name: text("name").notNull(),
 	bio: text("bio").notNull().default(""),
 
 	media: jsonb("media")
-		.$type<string[]>()
+		.$type<MediaEntry[]>()
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
@@ -48,7 +59,7 @@ export const albums = pgTable("albums", {
 		.default(sql`'[]'::jsonb`),
 
 	media: jsonb("media")
-		.$type<string[]>()
+		.$type<MediaEntry[]>()
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 
@@ -93,7 +104,7 @@ export const songs = pgTable("songs", {
 		.default(sql`'[]'::jsonb`),
 
 	media: jsonb("media")
-		.$type<string[]>()
+		.$type<MediaEntry[]>()
 		.notNull()
 		.default(sql`'[]'::jsonb`),
 

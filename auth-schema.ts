@@ -18,7 +18,6 @@ export const user = pgTable("user", {
   banExpires: timestamp("ban_expires"),
   bio: text("bio"),
   badges: text("badges").array().default([]),
-  badgeOrder: text("badge_order").array().default([]),
 });
 
 export const session = pgTable(

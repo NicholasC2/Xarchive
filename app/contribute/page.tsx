@@ -2,9 +2,9 @@
 
 import SongEdit from "./song-edit";
 import AlbumTab from "./album-tab";
-import ArtistTab from "./artist-tab";
 import { useState } from "react";
 import "./page.css"
+import ArtistEdit from "./artist-edit";
 
 export default function ContributionForm() {
   const [page, setPage] = useState("song");
@@ -27,7 +27,7 @@ export default function ContributionForm() {
         </div>
         { page === "song" && <SongEdit /> }
         { page === "album" && <AlbumTab /> }
-        { page === "artist" && <ArtistTab /> }
+        { page === "artist" && <ArtistEdit /> }
       </section>
     </main>
   );

@@ -7,7 +7,7 @@ import { Badge } from "@/lib/db";
 import { DragDropProvider } from "@dnd-kit/react";
 import { move } from "@dnd-kit/helpers";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { ArrowUpRight, Trash, X } from "lucide-react";
+import { ArrowUpRight, ImagePlus, Trash, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -50,10 +50,9 @@ export function SortableBadge({
 export default function ProfileEditPage() {
 	const [name, setName] = useState<false | string>(false);
 	const [bio, setBio] = useState<false | string>(false);
-	const [badges, setBadges] = useState<false | Badge[]>(false);
+	const [badges, setBadges] = useState<false | {static: Badge[], badges: Badge[]}>(false);
 	const [image, setImage] = useState<string | false | File | null>(false);
 	const [busy, setBusy] = useState<false | string>(false);
-	const [staticBadges, setStaticBadges] = useState<false | Badge[]>(false);
 
 	const [email, setEmail] = useState<false | string>(false);
 	const [password, setPassword] = useState("");
@@ -66,8 +65,51 @@ export default function ProfileEditPage() {
 	const [deleteConfirmError, setDeleteConfirmError] = useState("");
 
     const { data: session, isPending } = authClient.useSession();
+    const [googleProfile, setGoogleProfile] = useState<string | false>(false);
 
 	const router = useRouter();
+
+	useEffect(() => {
+		(async()=>{
+			const accounts = await authClient.listAccounts();
+
+			if(!accounts.data) return;
+
+			const googleAccount = accounts.data.find(
+				account => account.providerId === "google"
+			);
+
+			if (!googleAccount) {
+				return null;
+			}
+
+			const data = (await authClient.getAccessToken({
+				accountId: googleAccount.id
+			})).data;
+
+			if (!data?.accessToken) {
+				showError("Google access token unavailable");
+				return;
+			}
+
+			const response = await fetch(
+				"https://www.googleapis.com/oauth2/v2/userinfo",
+				{
+					headers: {
+						Authorization: `Bearer ${data.accessToken}`,
+					},
+					cache: "no-store",
+				}
+			);
+
+			if (!response.ok) {
+				showError("Failed to fetch Google profile");
+				return;
+			}
+
+			setGoogleProfile((await response.json()).picture ?? false);
+		})()
+	}, []);
 	
 	useEffect(() => {
 		(async() => {
@@ -81,16 +123,12 @@ export default function ProfileEditPage() {
 			setName(session.user.name);
 			setImage(session.user.image ?? null);
 			setBio(session.user.bio ?? "");
+			setBadges(session.user.badges ?? { static: [], badges: [] });
 
 			setEmail(session.user.email);
 
 			setBusy(false);
 
-			const res = await fetch(`/api/user/${session.user.id}`);
-			const badges = (await res.json()).badges as Badge[];
-
-			setStaticBadges(badges.filter(b => !session.user.badgeOrder?.includes(b.id)))
-			setBadges(badges.filter(b => session.user.badgeOrder?.includes(b.id)));
 		})()
 	}, [isPending])
 
@@ -117,7 +155,7 @@ export default function ProfileEditPage() {
 
 		setBusy("updating info...");
 
-		if(typeof name != "string" || !Array.isArray(badges) || typeof bio != "string") {
+		if(typeof name != "string" || typeof badges == "boolean" || typeof bio != "string") {
 			setBusy(false);
 			return;
 		};
@@ -149,7 +187,7 @@ export default function ProfileEditPage() {
 
 		const result = await authClient.updateUser({
 			name: name,
-			badgeOrder: badges.map(b => b.id),
+			badges: badges.badges.map(b => b.id),
 			bio: bio,
 			...(typeof imageUrl == "string" && { image: imageUrl })
 		})
@@ -183,8 +221,119 @@ export default function ProfileEditPage() {
 		}
 	}
 
+    const [imageEditPopup, setImageEditPopup] = useState(false);
+    const [page, setPage] = useState("Upload");
+    const [tempValue, setTempValue] = useState<string | false | File | null>("");
+
 	return (
 		<>
+		{imageEditPopup && <div
+            style={{
+                display: "flex",
+
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                
+                background: "#0005"
+            }}
+        >
+            <div 
+                className="panel nosize relative"
+                style={{
+                    paddingTop: "40px",
+                    minWidth: "20%",
+                    minHeight: "20%"
+                }}
+            >
+                <X className="absolute top-2 right-2 cursor-pointer" onClick={()=>setImageEditPopup(false)} />
+
+                <div className="panel-row"
+                    style={{
+                        margin: page == "Reset" ? 0 : 5
+                    }}
+                >
+                    {["Upload", "External URL", "Reset"].map((entryMode) => 
+                        <button 
+                            key={entryMode}
+                            aria-selected={page === entryMode} 
+                            onClick={() => setPage(entryMode)}
+                            className="flex-1"
+                            style={{
+                                textWrap: "nowrap"
+                            }}
+                        >{entryMode}</button>
+                    )}
+                    {googleProfile &&
+                        <button 
+                            aria-selected={page === "Google"} 
+                            onClick={() => setPage("Google")}
+                            className="flex-1"
+                            style={{
+                                textWrap: "nowrap"
+                            }}
+                        >Google</button>
+                    }
+                </div>
+
+                {page == "Upload" &&
+                    <label 
+                        htmlFor="image_upload" 
+                        className="cursor-pointer input gap-2"
+                        style={{
+                            padding: "20px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center"
+                        }}
+                    >
+                        <Upload />
+                        <div className="flex flex-col"
+                            style={{
+                                alignItems: "center"
+                            }}
+                        >
+                            Upload Image
+                            {tempValue instanceof File 
+							? <span>Selected: "{tempValue.name}"</span>
+							: <span style={{color: "var(--foreground-3)"}}>No image selected</span>}
+                        </div>
+                        <input 
+                            type="file" 
+                            id="image_upload" 
+                            hidden 
+                            onChange={(e)=>setTempValue(e.target.files?.[0] ?? image)}
+                        />
+                    </label>
+                }
+
+                {page == "External URL" && <input placeholder="External URL" onChange={(e)=>setTempValue(e.target.value ?? image)} />}
+
+                <button 
+                    onClick={()=>{
+                        if(page == "Reset") {
+                            setTempValue("");
+                        } else if(page == "Google") {
+                            setTempValue(googleProfile ?? "")
+                        }
+                        setImage(tempValue); 
+                        setImageEditPopup(false);
+                    }}
+                    className={page == "Reset" ? "secondary" : ""}
+                    style={{
+                        margin: (page == "Reset" || page == "Google") ? 0 : 5
+                    }}
+                >
+                    {page == "Upload" && (<>Use Selected Image <ArrowUpRight size={16} /></>)}
+                    {page == "External URL" && (<>Use External URL <ArrowUpRight size={16} /></>)}
+                    {page == "Google" && (<>Use Google Profile Photo <ArrowUpRight size={16} /></>)}
+                    {page == "Reset" && (<><Trash size={16} /> Reset</>)}
+                </button>
+            </div>
+        </div>}
+
 		{deletePopup && <div
 			style={{
 				display: "flex",
@@ -215,7 +364,37 @@ export default function ProfileEditPage() {
 			<div className="panel-row" style={{
 				alignItems: "end"
 			}}>
-				<ProfilePhoto canEdit={true} disabled={busy != false} image={image ?? ""} edit={setImage} />
+				<div className="w-[50px] h-[50px] relative" style={{
+					borderRadius: "50%",
+					flex: "none"
+				}}>
+					<ProfilePhoto disabled={busy != false} image={image ?? ""} />
+					{typeof image !== "boolean" && <label 
+						style={{
+							display: "flex",
+							margin: 0,
+							justifyContent: "center",
+							alignItems: "center",
+							overflow: "visible",
+							position: "absolute",
+							width: "100%",
+							height: "100%",
+							top: 0,
+							left: 0
+						}} 
+						className="cursor-pointer w-full h-full absolute"
+						onClick={(e)=>setImageEditPopup(true)}
+					>
+						<ImagePlus size={16}
+							style={{
+								position: "absolute",
+								top: 0,
+								right: 0,
+								filter: "drop-shadow(0 0 2px black)"
+							}}
+						/>
+					</label>}
+				</div>
 				<div className="panel-column">
 					<label>Name:</label>
 					{typeof name == "string"
@@ -238,7 +417,7 @@ export default function ProfileEditPage() {
 			 : <div className="loading min-h-[3.5rem] w-full flex-1" />}
 
 			<label>Badge order: <span style={{color: "var(--foreground-3)"}}>(The top badge's text color will be used for your name)</span></label>
-			{Array.isArray(badges) && Array.isArray(staticBadges)
+			{typeof badges != "boolean"
 				? (
 					<>
 
@@ -252,14 +431,13 @@ export default function ProfileEditPage() {
 						}}
 					>
 						<ul className="flex flex-row gap-2 input">
-							{staticBadges.map((badge, index) => (
+							{badges.static.map((badge, index) => (
 								<BadgeDisplay
 									badge={badge}
-									hoverText={false}
 									key={badge.name}
 								/>
 							))}
-							{badges.map((badge, index) => (
+							{badges.badges.map((badge, index) => (
 								<SortableBadge
 									badge={badge}
 									index={index}
@@ -275,7 +453,7 @@ export default function ProfileEditPage() {
 							background: "var(--background-1)"
 						}} 
 						text={"Preview"} 
-						textColor={staticBadges[0]?.textColor ?? badges[0]?.textColor ?? {}} 
+						textColor={badges.static[0]?.textColor ?? badges.badges[0]?.textColor ?? {}} 
 					/>
 
 					</>

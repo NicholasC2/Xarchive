@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
-import { artists, db } from "@/lib/db";
+import { artists, db, MediaEntry } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { createInsertSchema } from "drizzle-zod";
+import { validateMedia } from "../validateMedia";
+
+const ArtistSchema = createInsertSchema(artists);
 
 export async function POST(request: NextRequest) {
     try {
@@ -15,32 +20,55 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const {name, bio, media} = await request.json();
+        const id = crypto.randomUUID();
 
-        if(typeof name != "string" || name.length < 1) {
-            throw "name must be a string";
+        const result = ArtistSchema.safeParse({
+            ...(await request.json()),
+            id
+        });
+
+        if(!result.success) {
+            return NextResponse.json(
+                { error: "Invalid Schema" },
+                { status: 400 }
+            );
         }
 
-        if(typeof bio != "string") {
-            throw "bio must be a string";
+        const { name, bio } = result.data;
+
+        let media: MediaEntry[];
+
+        try {
+            media = validateMedia(result.data.media)
+        } catch(err: any) {
+            return NextResponse.json(
+                { error: "Media Schema invalid" },
+                { status: 403 }
+            );
         }
 
-        if(!Array.isArray(media) || !media.every((item: unknown) => typeof item === "string")) {
-            throw "media must be an array of strings"
+        const artist = await db.query.artists.findFirst({where: eq(artists.name, name)}).execute();
+
+        if(artist) {
+            return NextResponse.json(
+                { error: "Artist already exists" },
+                { status: 403 }
+            );
+        } else {
+            await db.insert(artists).values({
+                id,
+                name,
+                bio,
+                media,
+                contributor: session.user.id,
+                createdAt: new Date()
+            }).execute()
         }
 
-        await db.insert(artists).values({
-            name,
-            bio,
-            media,
-            contributor: session.user.id,
-            createdAt: new Date()
-        }).execute()
-
-        return NextResponse.json({success: true}, { status: 201 });
+        return NextResponse.json({id}, { status: 201 });
     } catch (error) {
         return NextResponse.json(
-            { error },
+            { error: "Internal Server Error" },
             { status: 500 }
         );
     }

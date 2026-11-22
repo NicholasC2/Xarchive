@@ -20,12 +20,8 @@ export async function POST(request: NextRequest) {
         const file = formData.get("file");
 
         if (!(file instanceof File)) {
-            return NextResponse.json(
-                { error: "No file provided" },
-                { status: 400 }
-            );
+            throw "No file provided";
         }
-
         const key = `media/${crypto.randomUUID()}`
 
         await bucket.send(
@@ -33,7 +29,7 @@ export async function POST(request: NextRequest) {
                 Bucket: bucketName,
                 Key: key,
                 Body: Buffer.from(await file.arrayBuffer()),
-                ContentType: file.type
+                ContentType: file.type,
             })
         );
 

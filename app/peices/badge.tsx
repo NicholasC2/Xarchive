@@ -5,7 +5,7 @@ import Image from "next/image";
 import { HtmlHTMLAttributes, useState } from "react";
 import { createPortal } from "react-dom";
 import ColorText from "./text-color";
-import "./badges.css";
+import "./badge.css";
 
 interface BadgeDisplayProps extends HtmlHTMLAttributes<HTMLImageElement> {
     badge: Badge,

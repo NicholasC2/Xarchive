@@ -1,12 +1,12 @@
-.badge-color-red {
+.badge-color-admin {
     color: red;
     -webkit-text-stroke: rgb(255, 132, 132) 1px;
     font-weight: 1000;
 
-    animation: badge-color-red 2s infinite ease-in-out;
+    animation: badge-color-admin 2s infinite ease-in-out;
 }
 
-@keyframes badge-color-red {
+@keyframes badge-color-admin {
     0% {
         color: red;
     }

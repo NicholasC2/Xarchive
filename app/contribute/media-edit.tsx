@@ -3,30 +3,22 @@
 import {
     Dispatch,
     SetStateAction,
+    useEffect,
     useState,
 } from "react";
 
 import { Plus, X } from "lucide-react";
 import { MediaType, mediaTypes } from "@/lib/db/constants/mediaType";
 import DropDown from "../dropdown/dropdown";
-import { AudioSource, sources } from "@/lib/db/constants/sources";
+import { AudioSource, audioSources } from "@/lib/db/constants/audioSources";
 import { authClient } from "@/lib/auth/client";
-
-export interface MediaEntry {
-    file: File | string | null;
-    isNew: boolean;
-    comment: string;
-    mediaType: MediaType;
-    source: AudioSource;
-    contributor: string;
-}
+import { MediaEntry } from "@/lib/db";
 
 interface MediaEditProps {
-    mediaDispatch?: [
-        MediaEntry[],
-        Dispatch<SetStateAction<MediaEntry[]>>
-    ];
+    media?: MediaUploadEntry[];
+    setMedia?: Dispatch<SetStateAction<MediaUploadEntry[]>>;
     allowedTypes: readonly MediaType[];
+    disabled?: boolean;
 }
 
 const acceptedMimeTypes: Record<MediaType, string[]> = {
@@ -37,8 +29,12 @@ const acceptedMimeTypes: Record<MediaType, string[]> = {
     "Banner": ["image/*"]
 };
 
-export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: MediaEditProps) {
-    const [media, setMedia] = mediaDispatch ?? useState<MediaEntry[]>([]);
+export interface MediaUploadEntry extends Omit<MediaEntry, "url"> {
+    url: File | string;
+}
+
+export default function MediaEdit({ allowedTypes = mediaTypes, disabled = false, ...props }: MediaEditProps) {
+    const [media, setMedia] = (props.media && props.setMedia) ? [props.media, props.setMedia] : useState<MediaUploadEntry[]>([]);
 
     const { data: session } = authClient.useSession();
 
@@ -70,12 +66,11 @@ export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: 
             {
                 comment: "",
                 contributor: session.user.id,
-                file: file,
-                isNew: true,
                 mediaType: fileMediaType,
-                source: "Unknown"
+                audioSource: "Unknown",
+                url: file,
             }
-        ]);
+        ])
     }
 
     function removeFile(index: number) {
@@ -132,9 +127,9 @@ export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: 
                         }}
                     >
                         {
-                            typeof entry.file != "string"
-                            ? <div>{entry.file?.name} (Not Uploaded)</div>
-                            : <a href={entry.file}>{entry.file}</a>
+                            entry.url instanceof File
+                            ? <div>{entry.url.name} (Not Uploaded)</div>
+                            : <a href={entry.url}>{entry.url}</a>
                         }
                     </div>
                     <div className="">
@@ -162,10 +157,10 @@ export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: 
                     {entry.mediaType == "Audio" && <div>
                         <label>Audio Source:</label>
                         <DropDown
-                            items={sources.values().toArray()}
-                            value={entry.source}
+                            items={audioSources.values().toArray()}
+                            value={entry.audioSource}
                             onChange={e => updateMedia(index, {
-                                source: e.target.value as AudioSource
+                                audioSource: e.target.value as AudioSource
                             })}
                             input={false}
                         />
@@ -177,8 +172,9 @@ export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: 
                 className="panel nosize"
                 style={{
                     margin: 0,
-                    cursor: "pointer",
-                    background: "var(--background-1)"
+                    cursor: disabled ? "not-allowed" : "pointer",
+                    background: "var(--background-1)",
+                    opacity: disabled ? 0.65 : 1
                 }}
                 htmlFor="file_upload"
             >
@@ -200,6 +196,7 @@ export default function MediaEdit({ mediaDispatch, allowedTypes = mediaTypes }: 
                     hidden
                     id="file_upload"
                     name="file_upload"
+                    disabled={disabled}
                     accept={[
                         ...new Set(
                             allowedTypes.flatMap(type => acceptedMimeTypes[type])

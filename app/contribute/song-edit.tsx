@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Song } from "@/lib/db";
 import SearchInput from "../dropdown/search-input";
-import MediaEdit, { MediaEntry } from "./media-edit";
+import MediaEdit, { MediaUploadEntry } from "./media-edit";
 
 interface SongEditProps {
 	songId?: string;
@@ -22,7 +22,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 	const [genre, setGenre] = useState("");
 	const [tags, setTags] = useState("");
 	const [releaseDate, setReleaseDate] = useState("");
-	const [media, setMedia] = useState<MediaEntry[]>([]);
+	const [media, setMedia] = useState<MediaUploadEntry[]>([]);
 
 	const joiner = ", ";
 
@@ -38,16 +38,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 				setGenre(songData.genre);
 				setTags(songData.tags.join(joiner));
 				setReleaseDate(songData.releaseDate ?? "");
-				const mediaEntries = await Promise.all(
-					songData.media.map(async (url): Promise<MediaEntry | null> => {
-						const media = await fetch(`/api/media/${url}`);
-						const json = await media.json();
-						if (!json) return null;
-						return json as MediaEntry;
-					})
-				);
-
-				setMedia(mediaEntries.filter((m): m is MediaEntry => m !== null));
+				setMedia(songData.media);
 			}
 		})()
 	}, [songId])
@@ -112,7 +103,7 @@ export default function SongEdit({ songId }: SongEditProps) {
 		<div className="flex flex-row">
 			<label>Media</label>&nbsp;<label style={{color: "var(--foreground-2)"}}>(Covers, Audio, Videos, etc)</label>
 		</div>
-		<MediaEdit mediaDispatch={[media, setMedia]} allowedTypes={["Cover", "Video", "Image", "Audio"]} />
+		<MediaEdit media={media} setMedia={setMedia} allowedTypes={["Cover", "Video", "Image", "Audio"]} />
 
         <button type="submit" className="w-full" disabled={busy}>{busy ? "saving entry…" : (songId ? `edit song` : `add song`)} <ArrowUpRight size={16} /></button>
 	</form>

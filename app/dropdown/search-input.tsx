@@ -12,6 +12,7 @@ interface SearchInputProps extends Omit<React.ComponentProps<"input">, "type"> {
 	splitAt?: string | null;
 	clickFill?: boolean;
 	alwaysShow?: boolean;
+	followLinks?: boolean;
 	onClickItem?: (entry: (string | Song | Album | Artist)) => void;
 }
 
@@ -21,6 +22,7 @@ export default function SearchInput({
 	splitAt = ", ",
 	clickFill = true,
 	alwaysShow = false,
+	followLinks = false,
 	onClickItem,
 	defaultValue,
 	value,
@@ -139,7 +141,7 @@ export default function SearchInput({
 				ref={inputRef}
 			/>
 
-			{(query || (!alwaysShow && focused)) && results.length > 0 && 
+			{!alwaysShow && focused && results.length > 0 && 
 				createPortal(
 					<ul 
 						className="drop-list"
@@ -157,15 +159,20 @@ export default function SearchInput({
 								aria-selected="false"
 								onMouseDown={event => {
 									event.preventDefault();
-									if(typeof item == "string") {
-										selectResult(item);
+									if(typeof item == "string" || !followLinks) {
+										selectResult(typeof item == "string" ? item : item.name);
 									}
 									onClickItem?.(item);
+									if(followLinks) {
+										setTimeout(()=>{
+											setFocused(false);
+										}, 500);
+									}
 								}}
 							>
 								{typeof item == "string"
 								? item
-								: <Entry entry={item} />}
+								: <Entry entry={item} links={followLinks} />}
 							</li>
 						))}
 					</ul>,

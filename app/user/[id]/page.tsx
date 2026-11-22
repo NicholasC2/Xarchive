@@ -2,18 +2,19 @@
 
 import { showError } from "@/app/error";
 import NotFound from "@/app/not-found";
+import Entry from "@/app/peices/entry";
 import Profile from "@/app/peices/profile";
 import ReadMore from "@/app/peices/read-more";
+import { authClient } from "@/lib/auth/client";
 import { Album, Artist, Badge, Song } from "@/lib/db";
 import { useEffect, useState } from "react";
 
 export default function UserPage({params}: {params: Promise<{ id: string }>}) {
 	const [name, setName] = useState<string | false>(false);
-	const [image, setImage] = useState<string | false>(false);
+	const [image, setImage] = useState<string | undefined | false>(false);
 	const [bio, setBio] = useState<string | false>(false);
-	const [badges, setBadges] = useState<Badge[] | false>(false);
-	const [contributions, setContributions] = useState<(Song | Artist | Album)[] | false>(false);
-	const [id, setId] = useState("");
+	const [badges, setBadges] = useState<false | {static: Badge[], badges: Badge[]}>(false);
+	const [contributions, setContributions] = useState<(Song | Album | Artist)[] | false>(false);
 
 	const [found, setFound] = useState<null | boolean>(null);
 	
@@ -21,25 +22,25 @@ export default function UserPage({params}: {params: Promise<{ id: string }>}) {
 		(async() => {
 			const { id } = await params
 
-            setId(id);
+			const result = await authClient.getUser({
+				query: {
+					id
+				}
+			});
 
-			const result = (await fetch("/api/user/"+id));
-
-			if(result.status == 404) {
+			if(result.error) {
+				showError(result.error.message ?? "Unable to fetch user");
 				setFound(false);
 				return;
-			} else if(!result.ok) {
-				showError(result.statusText);
-				return;
 			}
-			const JSON = await result.json()
-			if(!JSON) return;
 
-			setName(JSON.name);
-			setImage(JSON.image);
-			setBio(JSON.bio);
-			setBadges(JSON.badges);
-			setContributions(JSON.contributions);
+			const data = result.data;
+
+			setName(data.name);
+			setImage(data.image ?? undefined);
+			setBio(data.bio ?? "");
+			setBadges(data.badges);
+			setContributions(data.contributions);
 		})()
 	}, [])
 
@@ -48,9 +49,15 @@ export default function UserPage({params}: {params: Promise<{ id: string }>}) {
 		<div className="archive-page gap-5 flex-1">
 			<div className="flex flex-col flex-1 gap-2">
 				<label>Contributions:</label>
-				{Array.isArray(contributions)
+				{typeof contributions != "boolean"
 				 ? contributions.length > 0
-					? <ul></ul>
+					? <ul className="flex flex-col gap-5">
+						{contributions.map((c, i) => (
+							<li key={c.name + c.createdAt + i}>
+								<Entry entry={c} />
+							</li>
+						))}
+					</ul>
 					: <span className="text-[10px]" style={{color: "var(--foreground-3)"}} >No contributions yet...</span>
 				 : (
 					<>
