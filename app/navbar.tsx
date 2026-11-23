@@ -54,6 +54,8 @@ export default function Navbar() {
                 <Link href="/download">Bulk download <ArrowUpRight size={14} /></Link>
                 <Link href="/contribute">Contribute <ArrowUpRight size={14} /></Link>
 
+                {session?.user.role == "admin" && <Link href="/admin">Admin Dashboard</Link>}
+
                 <form onSubmit={e => {
                     e.preventDefault();
                     router.push(`/search?query=${encodeURIComponent(query)}`);
