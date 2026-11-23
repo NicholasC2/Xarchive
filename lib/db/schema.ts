@@ -139,6 +139,28 @@ export const badges = pgTable("badges", {
     }).notNull().defaultNow(),
 });
 
+export const reports = pgTable("reports", {
+    id: text("id").primaryKey(),
+
+    by: text("by").references(() => user.id, {
+        onDelete: "cascade",
+    }),
+
+    reason: text("reason").notNull(),
+
+    reportingId: text("reporting_id").notNull(),
+    reportingType: text("reporting_type", {
+        enum: ["user", "song", "album", "artist"],
+    }).notNull(),
+
+    createdAt: timestamp("created_at", {
+        withTimezone: true,
+    }).notNull().defaultNow(),
+});
+
+export type Report = typeof reports.$inferSelect;
+export type NewReport = typeof reports.$inferInsert;
+
 export type Badge = typeof badges.$inferSelect;
 export type NewBadge = typeof badges.$inferInsert;
 
