@@ -11,8 +11,7 @@ export default function ArtistEdit({ artistId }: { artistId?: string }) {
 	const [name, setName] = useState("");
 	const [bio, setBio] = useState("");
 	const [media, setMedia] = useState<MediaUploadEntry[]>([]);
-
-	const [artist, setArtist] = useState<Artist>();
+	const [contributor, setContributor] = useState();
 
 	const [error, setError] = useState("");
 
@@ -36,7 +35,7 @@ export default function ArtistEdit({ artistId }: { artistId?: string }) {
 
 				const JSON = await result.json();
 				
-				setArtist(JSON);
+				setContributor(JSON.contributor);
 				setName(JSON.name);
 				setBio(JSON.bio);
 				setMedia(JSON.media);
@@ -180,7 +179,7 @@ export default function ArtistEdit({ artistId }: { artistId?: string }) {
 			value={name}
 			onChange={(e) => setName(e.target.value)}
 			required
-			disabled={busy != "" || session?.user.id != artist?.contributor}
+			disabled={busy != "" || session?.user.id != contributor}
 		/>
 
 		<label>Bio</label>
@@ -188,7 +187,7 @@ export default function ArtistEdit({ artistId }: { artistId?: string }) {
 			autoComplete="song-bio"
 			value={bio}
 			onChange={(e) => setBio(e.target.value)}
-			disabled={busy != "" || session?.user.id != artist?.contributor}
+			disabled={busy != "" || session?.user.id != contributor}
 		/>
 		
 		<div className="flex flex-row">
@@ -206,7 +205,7 @@ export default function ArtistEdit({ artistId }: { artistId?: string }) {
 			{busy ? busy : (artistId ? `edit artist` : `add artist`)} <ArrowUpRight size={16} />
 		</button>
 
-		{artistId && typeof name != "boolean" && session?.user.id == artist?.contributor &&
+		{artistId && typeof name != "boolean" && session?.user.id == contributor &&
 		<button 
 			className="secondary" 
 			type="button" 

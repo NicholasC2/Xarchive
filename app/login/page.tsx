@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
 
 export default function Login() {
+    const params = useSearchParams();
+    const redirect_uri = params.get("redirect_uri");
+
     const router = useRouter();
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
@@ -33,7 +36,7 @@ export default function Login() {
                 password: String(data.get("password") ?? ""),
             });
             if (error) throw new Error(error.message || "Could not sign in. Check your details and try again.");
-            router.push("/");
+            router.push(decodeURI(redirect_uri ?? "/") );
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : "Could not sign in. Try again.");
             setBusy(false);
@@ -45,7 +48,7 @@ export default function Login() {
 
         await authClient.signIn.social({
             provider,
-            callbackURL: "/",
+            callbackURL: decodeURI(redirect_uri ?? "/") ,
         });
     }
 

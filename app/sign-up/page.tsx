@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { SiGoogle } from "@icons-pack/react-simple-icons";
 
 export default function SignUp() {
+    const params = useSearchParams();
+    const redirect_uri = params.get("redirect_uri");
+
     const router = useRouter();
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
@@ -54,7 +57,7 @@ export default function SignUp() {
             return;
         }
 
-        router.push("/");
+        router.push(decodeURI(redirect_uri ?? "/") );
     }
 
     async function handleOauth(e: Event, provider: string) {
@@ -62,7 +65,7 @@ export default function SignUp() {
 
         await authClient.signIn.social({
             provider,
-            callbackURL: "/",
+            callbackURL: decodeURI(redirect_uri ?? "/") 
         });
     }
 

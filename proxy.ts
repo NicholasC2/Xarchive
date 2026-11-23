@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
 
   if (!sessionCookie) {
     return NextResponse.redirect(
-      new URL("/login", request.url)
+      new URL("/login?redirect_uri=" + decodeURI(request.nextUrl.pathname), request.url)
     );
   }
 

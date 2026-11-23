@@ -332,6 +332,10 @@ textarea:focus-visible {
 
     overflow: hidden;
     width: 100%;
+    height: 100%;
+
+    flex: 1;
+
     margin: auto;
     padding: 30px 25px;
 }

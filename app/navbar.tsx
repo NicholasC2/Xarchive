@@ -4,14 +4,19 @@ import { ArrowLeftToLine, ArrowRightToLine, ArrowUpRight, LogOut, Settings } fro
 import Link from "next/link";
 import SearchInput from "./dropdown/search-input";
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import ProfilePhoto from "./peices/profile-photo";
 
 export default function Navbar() {
+    const params = useSearchParams();
+    const redirect_uri = params.get("redirect_uri");
+
     const [panelOpen, setPanelOpen] = useState(false);
-	const router = useRouter();
 	const [query, setQuery] = useState("");
+
+	const router = useRouter();
+    const pathname = usePathname();
 
     const { data: session } = authClient.useSession();
 
@@ -73,16 +78,15 @@ export default function Navbar() {
                             <Link href={`/user/${encodeURIComponent(session.user.id)}`}>{session.user.name}</Link>
                         </div>
                         <Link href="/user/edit"><Settings size={15} /></Link>
-                        <a className="cursor-pointer" onClick={()=>{
-                            authClient.signOut().then(()=>{
-                                router.push("/");
-                            });
+                        <a className="cursor-pointer" onClick={async()=>{
+                            await authClient.signOut();
+                            router.refresh();
                         }}><LogOut size={15} /></a>
                     </div>
                 ) : (
                     <div className="nav-account">
-                        <Link href="/login">Log in</Link>
-                        <Link className="nav-signup" href="/sign-up">Join</Link>
+                        <Link href={"/login?redirect_uri="+(redirect_uri ?? pathname)}>Log in</Link>
+                        <Link className="nav-signup" href={"/sign-up?redirect_uri="+(redirect_uri ?? pathname)}>Join</Link>
                     </div>
                 )}
 
